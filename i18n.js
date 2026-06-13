@@ -80,7 +80,7 @@
     'con.persons': { ko:'{n}명', en:'{n} ppl', th:'{n} คน' },
     'con.resCount': { ko:'예약 {n}건', en:'{n} reservations', th:'จอง {n} รายการ' },
     'con.loginTitle': { ko:'직원 로그인', en:'Staff login', th:'เข้าสู่ระบบพนักงาน' },
-    'con.email': { ko:'이메일', en:'Email', th:'อีเมล' },
+    'con.email': { ko:'아이디 (예: danny)', en:'ID (e.g. danny)', th:'ไอดี (เช่น danny)' },
     'con.pw': { ko:'비밀번호', en:'Password', th:'รหัสผ่าน' },
     'con.loginBtn': { ko:'로그인', en:'Log in', th:'เข้าสู่ระบบ' },
     'con.loginErr': { ko:'로그인 실패 — 이메일/비밀번호를 확인하세요', en:'Login failed — check email & password', th:'เข้าสู่ระบบไม่สำเร็จ — ตรวจสอบอีเมล/รหัสผ่าน' },
