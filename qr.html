@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0E7A5F">
+<title>QuesMe · 매장 QR</title>
+<link rel="stylesheet" href="app.css">
+<style>
+  .qrpage{min-height:100%; display:flex; flex-direction:column; align-items:center; padding:24px 16px; gap:16px;}
+  .poster{background:#fff; border:1px solid #e2e9e7; border-radius:20px; max-width:420px; width:100%; padding:30px 28px; text-align:center;}
+  .poster .emblem{justify-content:center; margin-bottom:14px;}
+  .poster .mk{width:40px; height:40px; flex:0 0 40px; font-size:14px;}
+  .poster .nm b{font-size:18px;} .poster .nm small{font-size:11px;}
+  .poster h2{margin:8px 0 2px; font-size:22px; color:var(--ink);}
+  .poster .sub{color:var(--muted); font-size:13px; margin:0 0 20px;}
+  .qrbox{display:inline-flex; padding:16px; background:#fff; border:1px solid #eef3f1; border-radius:16px;}
+  .qrbox img, .qrbox canvas{display:block; width:300px; height:300px;}
+  .steps{display:flex; justify-content:center; gap:18px; margin:20px 0 6px; font-size:12px; color:var(--muted);}
+  .steps b{display:block; color:var(--teal); font-size:15px;}
+  .urlline{font-size:11.5px; color:#9aa7a4; word-break:break-all; margin-top:10px;}
+  .actions{display:flex; gap:10px;}
+  .qrfail{color:var(--warm); font-size:13px; padding:40px 10px;}
+  @media print{
+    body{background:#fff;} .noprint{display:none !important;}
+    .poster{border:none; border-radius:0; box-shadow:none; max-width:none;}
+    .qrpage{padding:0;}
+  }
+</style>
+</head>
+<body>
+<div class="qrpage">
+  <div class="poster">
+    <span class="emblem"><span class="mk" id="mk">강남</span><span class="nm"><b id="storeName">강남바베큐 라끄라방점</b><small>QuesMe 가상 대기열</small></span></span>
+    <h2>QR 스캔하고 바로 줄서기</h2>
+    <p class="sub">앱 설치 없이 · 자리에 묶이지 않고 순서를 기다리세요</p>
+    <div class="qrbox" id="qrbox"><div class="qrfail" id="qrfail">QR 생성 중…</div></div>
+    <div class="steps">
+      <div><b>1</b> 카메라로 스캔</div>
+      <div><b>2</b> 인원·닉네임 입력</div>
+      <div><b>3</b> 순서 되면 알림</div>
+    </div>
+    <div class="urlline" id="url"></div>
+  </div>
+  <div class="actions noprint">
+    <button class="btn" onclick="window.print()">🖨 인쇄하기</button>
+    <a class="btn ghost" id="backCon">← 콘솔로</a>
+  </div>
+  <p class="noprint" style="font-size:12px;color:#9aa7a4;text-align:center;max-width:420px;">
+    이 QR은 <b id="slugT">gangnam</b> 매장 전용입니다. 매장마다 주소(<code>?store=…</code>)가 달라 QR도 각각 생성됩니다.<br>
+    배포(호스팅) 후엔 이 QR이 실제 도메인 주소를 가리킵니다.
+  </p>
+</div>
+
+<script src="i18n.js"></script>
+<script src="queue-store.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  var slug = new URLSearchParams(location.search).get('store') || 'gangnam';
+  var store = new QueueStore(slug);
+  var st = store.getState();
+  document.getElementById('mk').innerHTML = st.logo ? '<img src="'+st.logo+'" alt="로고">' : '강남';
+  document.getElementById('storeName').textContent = I18N.storeName(st, 'ko');
+  document.getElementById('slugT').textContent = slug;
+  document.getElementById('backCon').href = 'console.html?store='+encodeURIComponent(slug);
+
+  var custUrl = new URL('customer.html?store='+encodeURIComponent(slug), location.href).href;
+  document.getElementById('url').textContent = custUrl;
+
+  function draw(){
+    var box = document.getElementById('qrbox');
+    if(typeof QRCode === 'undefined'){ document.getElementById('qrfail').textContent = 'QR 라이브러리를 불러오지 못했습니다 (인터넷 확인). 아래 주소를 사용하세요.'; return; }
+    box.innerHTML = '';
+    new QRCode(box, { text: custUrl, width: 300, height: 300, colorDark: '#16323A', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  }
+  if(document.readyState === 'complete') draw(); else window.addEventListener('load', draw);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "QuesMe — 강남바베큐 줄서기",
+  "short_name": "QuesMe",
+  "description": "QR 한 번으로 줄서기·시간 예약. 설치 없이 바로, 자주 오면 홈 화면에 추가.",
+  "start_url": "customer.html?store=gangnam",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0E7A5F",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

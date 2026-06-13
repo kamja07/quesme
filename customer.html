@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E7A5F">
+<title>QuesMe</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="app.css">
+<style>
+  .langsel{margin-left:auto; background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:9px; padding:6px 8px; font-size:12px; font-family:inherit;}
+  .langsel option{color:#16323A;}
+</style>
+</head>
+<body>
+<div class="cust">
+  <div class="cust-top">
+    <span class="mk" id="mk"></span>
+    <div><div class="t1" id="storeName">강남바베큐 라끄라방점</div><div class="t2" id="tagline"></div></div>
+    <select id="langSel" class="langsel" onchange="setLang(this.value)">
+      <option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option><option value="zh">中文</option><option value="ja">日本語</option><option value="hi">हिन्दी</option><option value="ru">Русский</option>
+    </select>
+  </div>
+  <div class="cust-body" id="body"></div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="queue-store.js"></script>
+<script>
+(function(){
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
+  var slug = new URLSearchParams(location.search).get('store') || 'gangnam';
+  var store = new QueueStore(slug);
+  var myKey = 'quesme:my:' + slug, myResKey = 'quesme:myres:' + slug;
+  var partySize = 2, joinMode = 'now', lastNick = '골프왕';
+  var lang = I18N.detectLang();
+  function t(k){ return I18N.t(lang, k); }
+  function tn(k, n){ return I18N.t(lang, k).replace('{n}', n); }
+
+  function myId(){ return sessionStorage.getItem(myKey) || null; }
+  function setMyId(v){ v ? sessionStorage.setItem(myKey, v) : sessionStorage.removeItem(myKey); }
+  function myResId(){ return sessionStorage.getItem(myResKey) || null; }
+  function setMyResId(v){ v ? sessionStorage.setItem(myResKey, v) : sessionStorage.removeItem(myResKey); }
+
+  function findMe(st){
+    var id = myId(); if(!id) return null;
+    if(st.serving && st.serving.id===id) return st.serving;
+    return st.waiting.find(function(x){return x.id===id;}) || null;
+  }
+  function isCalled(st){ var id=myId(); return st.serving && st.serving.id===id; }
+  function overallPos(st, me){ return st.waiting.findIndex(function(p){return p.id===me.id;}); }
+  function slots(){ var out=[],d=new Date(); d.setSeconds(0,0); var m=d.getMinutes(); d.setMinutes(m+((m<30)?(30-m):(60-m))); for(var i=0;i<6;i++){var t=new Date(d.getTime()+i*30*60000); out.push(String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'));} return out; }
+
+  window.setLang=function(v){ lang=v; try{localStorage.setItem('quesme:lang',v);}catch(e){} render(store.getState()); };
+  window.setSize=function(d){ partySize=Math.max(1,Math.min(8,partySize+d)); render(store.getState()); };
+  window.setMode=function(m){ var i=document.getElementById('joinNick'); if(i) lastNick=i.value; joinMode=m; render(store.getState()); };
+  window.doJoin=function(){ var nick=(document.getElementById('joinNick').value||'-').trim(); setMyId(store.joinQueue({nick:nick,size:partySize,lang:lang})); };
+  window.doReserve=function(){ var nick=(document.getElementById('joinNick').value||'-').trim(); var time=document.getElementById('resSlot').value; setMyResId(store.reserve({nick:nick,size:partySize,time:time,lang:lang})); };
+  window.doCheckIn=function(){ var qid=store.checkIn(myResId()); if(qid){ setMyResId(null); setMyId(qid); } };
+  window.doCancelRes=function(){ store.cancelReservation(myResId()); setMyResId(null); };
+  window.doPriority=function(){ store.buyPriority(myId()); };
+  window.doPass=function(){ store.passTurn(myId()); };
+  window.doYield=function(n){ store.yieldServing(myId(), n); };
+  window.doCancel=function(){ store.cancel(myId()); setMyId(null); };
+
+  function render(st){
+    document.getElementById('langSel').value = lang;
+    document.getElementById('mk').innerHTML = st.logo ? '<img src="'+st.logo+'" alt="logo">' : '강남';
+    document.getElementById('storeName').textContent = I18N.storeName(st, lang);
+    document.getElementById('tagline').textContent = 'QuesMe · ' + t('appTagline');
+    var el = document.getElementById('body');
+    var me = findMe(st);
+
+    if(!me){
+      if(myResId() && st.reservations.find(function(x){return x.id===myResId();})){
+        var r = st.reservations.find(function(x){return x.id===myResId();});
+        el.innerHTML =
+          '<div class="resbadge">📅 '+t('res.done')+'</div>'+
+          '<div class="ticket"><div class="nick">'+t('lbl.myNick')+' <b>'+r.nick+'</b></div>'+
+            '<div class="num" style="font-size:38px">'+r.time+'</div>'+
+            '<span class="sz">'+tn('lbl.party', r.size)+'</span>'+
+            '<div style="font-size:12px;color:#6b7a7f;margin-top:5px">'+t('res.num')+' '+r.num+'</div></div>'+
+          '<div class="est" style="margin-top:16px">'+t('res.notify')+' 🔔</div>'+
+          '<button class="bigbtn" onclick="doCheckIn()">'+t('res.checkin')+'</button>'+
+          '<button class="btn gray block sm" style="margin-top:10px" onclick="doCancelRes()">'+t('res.cancel')+'</button>';
+        return;
+      }
+      var isRes = joinMode==='reserve';
+      el.innerHTML =
+        '<div class="modetabs"><button class="mtab '+(!isRes?'on':'')+'" onclick="setMode(\'now\')">'+t('join.now')+'</button>'+
+          '<button class="mtab '+(isRes?'on':'')+'" onclick="setMode(\'reserve\')">'+t('join.reserve')+'</button></div>'+
+        '<div class="field"><label>'+t('field.party')+'</label><div class="sizer">'+
+          '<button onclick="setSize(-1)">−</button><div class="szval">'+partySize+'</div><button onclick="setSize(1)">+</button></div>'+
+          '<div class="telnote">'+t('field.partyTel')+'</div></div>'+
+        '<div class="field"><label>'+t('field.nick')+'</label><input id="joinNick" value="'+lastNick+'" maxlength="12"></div>'+
+        (isRes ? '<div class="field"><label>'+t('field.resTime')+'</label><select id="resSlot">'+slots().map(function(s){return '<option value="'+s+'">'+t('opt.today')+' '+s+'</option>';}).join('')+'</select></div>' : '')+
+        '<button class="bigbtn" onclick="'+(isRes?'doReserve()':'doJoin()')+'">'+(isRes?t('btn.reserveDo'):t('btn.join'))+'</button>'+
+        '<p class="hint">'+(isRes?t('hint.reserve'):t('hint.join'))+'</p>'+
+        '<div class="installbar">📲 <span>'+t('install')+'</span></div>';
+      return;
+    }
+
+    if(isCalled(st)){
+      var canY1 = st.waiting.length>=1, canY2 = st.waiting.length>=2, yieldHtml2='';
+      if(canY1 || canY2){
+        yieldHtml2 = '<p class="hint" style="margin:14px 0 8px">'+t('yield.ask')+'</p><div style="display:flex;gap:8px">'+
+          (canY1 ? '<button class="btn ghost block sm" onclick="doYield(1)">🙋 '+t('yield.one')+'</button>' : '')+
+          (canY2 ? '<button class="btn ghost block sm" onclick="doYield(2)">🙋 '+t('yield.two')+'</button>' : '')+'</div>';
+      }
+      el.innerHTML =
+        '<div class="banner now">🔔 '+t('call.enter')+'</div>'+
+        '<div class="ticket"><div class="nick">'+t('lbl.myNick')+' <b>'+me.nick+'</b> <span class="pill pri">'+tn('lbl.party', me.size)+'</span>'+(me.passes?' <span class="pill wait">'+tn('pill.yielded', me.passes)+'</span>':'')+'</div>'+
+          '<div class="num">'+tn('lbl.custNo', me.cno)+'</div></div>'+
+        '<div class="seatbig"><div class="tnum">'+t('call.enterBig')+'</div><div class="tlbl">'+t('call.followStaff')+'</div></div>'+
+        yieldHtml2 +
+        '<button class="btn gray block sm" style="margin-top:10px" onclick="doCancel()">'+t('wait.cancel')+'</button>';
+      return;
+    }
+
+    var pos = overallPos(st, me);
+    var banner = pos<=1 ? '<div class="banner soon">⏰ '+t('soon')+'</div>' : '';
+    var yieldHtml = '';
+    if(pos===0 && st.waiting.length>1 && me.passes<2) yieldHtml = '<button class="btn ghost block sm" style="margin-top:8px" onclick="doPass()">🙋 '+t('pass.one')+'</button>';
+    else if(me.passes>=2) yieldHtml = '<div style="text-align:center;font-size:11.5px;color:#9aa7a4;margin-top:8px">'+t('pass.max')+'</div>';
+    var passHtml = me.priority
+      ? '<div class="ppass bought"><div class="ph"><b>'+t('pri.applied')+'</b><span class="pill pri">PRIORITY</span></div><p>'+t('pri.appliedDesc')+'</p></div>'
+      : '<div class="ppass"><div class="ph"><b>'+t('pri.title')+'</b><span class="price">฿49</span></div><p>'+t('pri.desc')+'</p><button class="btn amber block sm" onclick="doPriority()">'+t('pri.buy')+'</button></div>';
+    el.innerHTML = banner +
+      '<div class="ticket"><div class="nick">'+t('lbl.myNick')+' <b>'+me.nick+'</b> '+
+        (me.priority?'<span class="pill pri">'+t('pill.priority')+'</span>':'<span class="pill wait">'+t('pill.waiting')+'</span>')+(me.reserved?' <span class="pill pri">'+t('pill.reserved')+'</span>':'')+(me.passes?' <span class="pill wait">'+tn('pill.yielded', me.passes)+'</span>':'')+'</div>'+
+        '<div class="num">'+tn('lbl.custNo', me.cno)+'</div><div><span class="sz">'+tn('lbl.party', me.size)+'</span></div></div>'+
+      '<div class="aheadbox"><div class="n">'+pos+'</div><div class="lbl">'+t('ahead.lbl')+'</div></div>'+
+      '<div class="est">'+tn('est', Math.max(5,(pos+1)*8))+' 🔔</div>'+
+      passHtml + yieldHtml +
+      '<button class="btn gray block sm" style="margin-top:10px" onclick="doCancel()">'+t('wait.cancel')+'</button>';
+  }
+
+  store.subscribe(render);
+  setInterval(function(){ if(findMe(store.getState())) render(store.getState()); }, 5000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0c1a1f">
+<title>QuesMe · 전광판</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="board-wrap"><div class="board">
+  <div class="board-h"><div class="bl"><span class="mk" id="mk"></span><span id="storeName">강남바베큐 라끄라방점</span></div><div class="bclock" id="clock"></div></div>
+  <div class="board-now" id="now"></div>
+  <div class="board-recent" id="recent"></div>
+  <div class="board-ad"><span class="tag" id="adTag">오늘</span><div class="adtxt" id="adTxt"></div></div>
+</div></div>
+
+<script src="i18n.js"></script>
+<script src="queue-store.js"></script>
+<script>
+(function(){
+  var slug = new URLSearchParams(location.search).get('store') || 'gangnam';
+  var store = new QueueStore(slug);
+  var lastKey = '';
+  var ADS = [
+    {tag:'오늘', txt:'삼겹살·목살 무한리필 329฿', sub:'음료 리필 50฿ · 시간 제한 없음'},
+    {tag:'세트', txt:'4인 가족세트 + 떡볶이 서비스', sub:'주말 한정 · QuesMe 예약 고객'},
+    {tag:'NEW', txt:'강남바베큐 멤버십 적립 시작', sub:'방문 5회 시 1인 무료'}
+  ];
+  var adIdx = 0;
+
+  function render(st){
+    document.getElementById('mk').innerHTML = st.logo ? '<img src="'+st.logo+'" alt="로고">' : '강남';
+    document.getElementById('storeName').textContent = I18N.storeName(st, 'ko');
+    var now = document.getElementById('now');
+    if(st.serving){
+      var s = st.serving, lg = s.lang || 'en';
+      var custNo = I18N.t(lg, 'lbl.custNo').replace('{n}', s.cno);
+      now.innerHTML = '<div class="lab">NOW CALLING · 입장 안내</div>'+
+        '<div class="nick">'+custNo+'</div>'+
+        '<div class="tbl"><b>'+s.nick+'</b> · '+s.size+'명 · '+I18N.t(lg,'call.enter')+'</div>';
+      var key = s.id;
+      if(key!==lastKey){ lastKey=key; now.classList.remove('flash'); void now.offsetWidth; now.classList.add('flash'); }
+    } else {
+      now.innerHTML = '<div class="lab">NOW CALLING</div><div class="nick">입장 안내 대기 중 · Please wait</div><div class="tbl">잠시만 기다려 주세요</div>';
+      lastKey='';
+    }
+    document.getElementById('recent').innerHTML = st.recent.length
+      ? '<span style="background:none;opacity:.7">방금 입장:</span>'+st.recent.map(function(s){return '<span>'+s.nick+' · No.'+s.cno+'</span>';}).join('') : '';
+  }
+  function rotateAd(){ adIdx=(adIdx+1)%ADS.length; var a=ADS[adIdx]; document.getElementById('adTag').textContent=a.tag; document.getElementById('adTxt').innerHTML=a.txt+'<small>'+a.sub+'</small>'; }
+
+  store.subscribe(render);
+  setInterval(function(){ var t=new Date(); document.getElementById('clock').textContent=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0'); }, 1000);
+  rotateAd(); setInterval(rotateAd, 5000);
+})();
+</script>
+</body>
+</html>

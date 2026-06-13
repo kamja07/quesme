@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#16323A">
+<title>QuesMe · Console</title>
+<link rel="stylesheet" href="app.css">
+<style>
+  .con-now{background:var(--teal-l); padding:16px 18px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--teal-line);}
+  .con-now .lbl{font-size:12px; color:var(--teal-d); font-weight:700;}
+  .con-now .who{font-size:22px; font-weight:800; color:var(--teal);}
+  .con-now .who small{font-size:14px; opacity:.8; font-weight:700;}
+  .callbtn{background:var(--teal); color:#fff; padding:14px 20px; font-size:16px; border-radius:12px; white-space:nowrap;}
+  .callbtn:disabled{background:#bcc9c6; cursor:not-allowed;}
+  .nameset{padding:11px 18px; background:#fbfdfc; border-bottom:1px solid #eef3f1;}
+  .nameset .nl{font-size:12px; color:var(--muted); font-weight:700; margin-bottom:8px;}
+  .nameset .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:8px;}
+  .nameset .ni{display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #e2e9e7; border-radius:9px; padding:4px 8px;}
+  .nameset .ni b{font-size:11px; color:var(--teal-d); flex:0 0 52px;}
+  .nameset .ni input{flex:1; border:none; outline:none; font-size:13px; font-family:inherit; color:var(--ink); min-width:0; background:transparent;}
+  .nameset .help{font-size:11px; color:#9aa7a4; margin-top:7px;}
+  .conlang{background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:5px 7px; font-size:12px; font-family:inherit;}
+  .conlang option{color:#16323A;}
+  .cnoChip{display:inline-block; background:#eef3f1; color:#0a5f4a; font-size:11px; font-weight:800; padding:2px 7px; border-radius:10px; margin-left:5px;}
+</style>
+</head>
+<body>
+<div class="con">
+  <div class="con-top">
+    <span class="emblem"><span class="mk" id="mk"></span><span class="nm"><b id="storeName">강남바베큐 라끄라방점</b><small id="subtitle">QuesMe</small></span></span>
+    <select id="conLangSel" class="conlang" onchange="setConLang(this.value)">
+      <option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option>
+    </select>
+  </div>
+  <div class="tcfg" id="tcfg"></div>
+  <div class="nameset"><div class="nl" id="namesTitle"></div><div class="grid" id="nameGrid"></div><div class="help" id="nameHelp"></div></div>
+  <div class="con-stats">
+    <div><div class="v" id="stWait">0</div><div class="k" id="kWait"></div></div>
+    <div><div class="v" id="stServed">0</div><div class="k" id="kServed"></div></div>
+    <div><div class="v" id="stRes">0</div><div class="k" id="kRes"></div></div>
+  </div>
+  <div class="con-now">
+    <div><div class="lbl" id="nowLbl"></div><div class="who" id="now">—</div></div>
+    <button class="callbtn" id="callBtn" onclick="callNext()"></button>
+  </div>
+  <div class="sech"><span id="listTitle"></span> <span style="color:#bcc9c6" id="listSub"></span></div>
+  <div class="con-list" id="list"></div>
+  <div class="con-foot" id="foot"></div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="queue-store.js"></script>
+<script>
+(function(){
+  var slug = new URLSearchParams(location.search).get('store') || 'gangnam';
+  var store = new QueueStore(slug);
+  var conLang = (function(){ try{ return localStorage.getItem('quesme:conlang') || 'ko'; }catch(e){ return 'ko'; } })();
+  function T(k){ return I18N.t(conLang, k); }
+  function Tn(k,n){ return I18N.t(conLang, k).replace('{n}', n); }
+
+  window.setConLang=function(v){ conLang=v; try{localStorage.setItem('quesme:conlang',v);}catch(e){} render(store.getState()); };
+  window.callNext=function(){ store.callNext(); };
+  window.upLogo=function(input){ var f=input.files&&input.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ store.setLogo(r.result); }; r.readAsDataURL(f); };
+  window.rmLogo=function(){ store.setLogo(null); };
+  function fmtWait(ts){ var s=Math.floor((Date.now()-ts)/1000); return s<60? s+'s' : Math.floor(s/60)+'m'; }
+
+  function buildNames(){  // 입력칸은 한 번만 렌더(타이핑 중 포커스 유지)
+    var st = store.getState(); var names = (st.store && st.store.names) || {};
+    document.getElementById('nameGrid').innerHTML = I18N.LANGS.map(function(L){
+      var v = (names[L.code]||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+      return '<label class="ni"><b>'+L.label+'</b><input data-lang="'+L.code+'" value="'+v+'" placeholder="'+L.label+'"></label>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('#nameGrid input'), function(inp){
+      inp.addEventListener('change', function(){ store.setStoreName(inp.getAttribute('data-lang'), inp.value); });
+    });
+  }
+
+  function render(st){
+    document.getElementById('conLangSel').value = conLang;
+    document.getElementById('mk').innerHTML = st.logo ? '<img src="'+st.logo+'" alt="logo">' : '강남';
+    document.getElementById('storeName').textContent = I18N.storeName(st, conLang);
+    document.getElementById('subtitle').textContent = 'QuesMe · ' + T('con.subtitle');
+    document.getElementById('namesTitle').textContent = T('con.namesTitle');
+    document.getElementById('nameHelp').textContent = T('con.namesHelp');
+    document.getElementById('kWait').textContent = T('con.statWait');
+    document.getElementById('kServed').textContent = T('con.statServed');
+    document.getElementById('kRes').textContent = T('con.statRes');
+    document.getElementById('nowLbl').textContent = T('con.nowCalling');
+    document.getElementById('callBtn').textContent = T('con.callNext');
+    document.getElementById('listTitle').textContent = T('con.listTitle');
+    document.getElementById('listSub').textContent = T('con.listSub');
+
+    document.getElementById('tcfg').innerHTML = '<span class="cfl">'+T('con.branding')+'</span>'+
+      '<label class="logobtn">🖼 '+(st.logo?T('con.logoChange'):T('con.logoUp'))+'<input type="file" accept="image/*" onchange="upLogo(this)"></label>'+
+      (st.logo ? '<button class="logobtn rm" onclick="rmLogo()">'+T('con.logoRemove')+'</button>' : '')+
+      '<a class="logobtn" href="qr.html?store='+encodeURIComponent(slug)+'" style="text-decoration:none">📱 '+T('con.qr')+'</a>';
+
+    document.getElementById('stWait').textContent = st.waiting.length;
+    document.getElementById('stServed').textContent = st.served;
+    document.getElementById('stRes').textContent = st.reservations.length;
+    document.getElementById('now').innerHTML = st.serving
+      ? st.serving.nick+' <small>· '+Tn('lbl.custNo', st.serving.cno)+' · '+Tn('con.persons', st.serving.size)+'</small>'
+      : '—';
+    document.getElementById('callBtn').disabled = (st.waiting.length===0 && !st.serving);
+
+    var list = document.getElementById('list');
+    if(!st.waiting.length){ list.innerHTML = '<div style="padding:22px;text-align:center;color:#9aa7a4;font-size:13px;">'+T('con.empty')+'</div>'; }
+    else list.innerHTML = st.waiting.map(function(p,i){
+      return '<div class="qrow"><div class="qn">'+(i+1)+'</div><div class="qnick">'+p.nick+' '+
+        (p.priority?'<span class="staffdot">★</span>':'')+(p.reserved?'<span class="staffdot">📅</span>':'')+
+        '<span class="cnoChip">'+Tn('lbl.custNo', p.cno)+'</span><span class="szchip">'+Tn('con.persons', p.size)+'</span></div>'+
+        '<div class="qw">'+fmtWait(p.joinedAt)+'</div></div>';
+    }).join('');
+
+    document.getElementById('foot').textContent = st.reservations.length
+      ? Tn('con.resCount', st.reservations.length)+': '+st.reservations.map(function(r){return r.time+' '+r.nick+'('+r.size+')';}).join(', ')
+      : T('con.footHint');
+  }
+
+  buildNames();
+  store.subscribe(render);
+  setInterval(function(){ render(store.getState()); var t=new Date(); document.getElementById('clock')&&0; }, 1000);
+})();
+</script>
+</body>
+</html>
