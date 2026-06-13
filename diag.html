@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuesMe 화면 진단</title>
+<style>
+  body{font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif; margin:0; padding:18px; color:#16323A; background:#fff;}
+  h1{font-size:20px; color:#0E7A5F; margin:0 0 4px;}
+  .sub{font-size:13px; color:#6b7a7f; margin-bottom:16px;}
+  .row{display:flex; justify-content:space-between; gap:12px; padding:11px 13px; border:1px solid #eef3f1; border-radius:11px; margin-bottom:8px;}
+  .k{font-size:14px; color:#6b7a7f;}
+  .v{font-size:20px; font-weight:800; color:#0E7A5F;}
+  .ua{font-size:11px; color:#9aa7a4; word-break:break-all; margin-top:12px; line-height:1.5;}
+  .ruler{height:14px; background:repeating-linear-gradient(90deg,#0E7A5F 0,#0E7A5F 1px,transparent 1px,transparent 50px); margin:14px 0 4px;}
+  .rl{font-size:11px; color:#9aa7a4;}
+</style>
+</head>
+<body>
+<h1>QuesMe 화면 진단</h1>
+<div class="sub">이 화면을 LINE에서 열고 / 크롬에서 열어서 숫자를 비교해 주세요.</div>
+<div id="out"></div>
+<div class="ruler"></div>
+<div class="rl">↑ 눈금 한 칸 = 50 CSS픽셀 (LINE에서 더 넓게/좁게 보이면 차이가 있는 것)</div>
+<div class="ua" id="ua"></div>
+<script>
+function upd(){
+  var vv = window.visualViewport || {};
+  var rows = [
+    ['innerWidth (px)', window.innerWidth],
+    ['clientWidth (레이아웃)', document.documentElement.clientWidth],
+    ['visualViewport.width', Math.round(vv.width||0)],
+    ['visualViewport.scale', (vv.scale!=null? Math.round(vv.scale*1000)/1000 : '-')],
+    ['devicePixelRatio', window.devicePixelRatio],
+    ['screen.width', (window.screen||{}).width],
+    ['screen.height', (window.screen||{}).height]
+  ];
+  document.getElementById('out').innerHTML = rows.map(function(r){
+    return '<div class="row"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>';
+  }).join('');
+  document.getElementById('ua').textContent = 'UA: ' + navigator.userAgent;
+}
+upd();
+if(window.visualViewport){ window.visualViewport.addEventListener('resize', upd); window.visualViewport.addEventListener('scroll', upd); }
+window.addEventListener('resize', upd);
+</script>
+</body>
+</html>
