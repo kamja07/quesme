@@ -89,7 +89,7 @@
   window.rmLogo=function(){ store.setLogo(null); };
   window.doLogin=function(){
     var em=(document.getElementById('liEmail').value||'').trim(), pw=document.getElementById('liPw').value||'';
-    if(em && em.indexOf('@')<0) em = em + '@quesme.app';   // 아이디 → 내부 이메일
+    if(em && em.indexOf('@')<0) em = em + '@thaimate.app';   // 아이디 → 기존 thaimate 인증 계정
     document.getElementById('liErr').textContent='';
     store.signIn(em,pw).then(function(res){ if(res && res.error){ document.getElementById('liErr').textContent=T('con.loginErr'); } })
       .catch(function(){ document.getElementById('liErr').textContent=T('con.loginErr'); });
