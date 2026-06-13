@@ -34,7 +34,8 @@
   var slug = new URLSearchParams(location.search).get('store') || 'gangnam';
   var store = new QueueStore(slug);
   var myKey = 'quesme:my:' + slug, myResKey = 'quesme:myres:' + slug;
-  var partySize = 2, joinMode = 'now', lastNick = '골프왕';
+  var partySize = 2, joinMode = 'now';
+  var lastNick = (function(){ try{ return localStorage.getItem('quesme:nick') || ''; }catch(e){ return ''; } })();
   var lang = I18N.detectLang();
   function t(k){ return I18N.t(lang, k); }
   function tn(k, n){ return I18N.t(lang, k).replace('{n}', n); }
@@ -94,7 +95,7 @@
         '<div class="field"><label>'+t('field.party')+'</label><div class="sizer">'+
           '<button onclick="setSize(-1)">−</button><div class="szval">'+partySize+'</div><button onclick="setSize(1)">+</button></div>'+
           '<div class="telnote">'+t('field.partyTel')+'</div></div>'+
-        '<div class="field"><label>'+t('field.nick')+'</label><input id="joinNick" value="'+lastNick+'" maxlength="12"></div>'+
+        '<div class="field"><label>'+t('field.nick')+'</label><input id="joinNick" value="'+lastNick+'" placeholder="'+t('start.nickPh')+'" maxlength="12"></div>'+
         (isRes ? '<div class="field"><label>'+t('field.resTime')+'</label><select id="resSlot">'+slots().map(function(s){return '<option value="'+s+'">'+t('opt.today')+' '+s+'</option>';}).join('')+'</select></div>' : '')+
         '<button class="bigbtn" onclick="'+(isRes?'doReserve()':'doJoin()')+'">'+(isRes?t('btn.reserveDo'):t('btn.join'))+'</button>'+
         '<p class="hint">'+(isRes?t('hint.reserve'):t('hint.join'))+'</p>'+

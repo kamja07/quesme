@@ -33,6 +33,8 @@
   .logincard input{width:100%; padding:13px; border:1.5px solid #d7e2df; border-radius:11px; font-size:15px; font-family:inherit; margin-bottom:10px;}
   .logincard input:focus{outline:none; border-color:var(--teal);}
   .loginErr{color:var(--warm); font-size:13px; text-align:center; margin-top:10px; min-height:1px;}
+  .loginAlt{text-align:center; font-size:13px; color:var(--muted); margin-top:16px; padding-top:15px; border-top:1px solid #eef3f1;}
+  .loginAlt a{color:var(--teal); font-weight:700; text-decoration:none; white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -44,6 +46,7 @@
     <input id="liPw" type="password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="bigbtn" onclick="doLogin()">로그인</button>
     <div class="loginErr" id="liErr"></div>
+    <div class="loginAlt">아직 매장이 없으신가요? <a href="register.html">매장 등록 신청 →</a></div>
   </div>
 </div>
 

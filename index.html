@@ -6,16 +6,111 @@
 <meta name="theme-color" content="#0E7A5F">
 <title>QuesMe</title>
 <link rel="manifest" href="manifest.webmanifest">
-<script>
-  // 루트로 들어온 손님을 둘러보기(home) 또는 매장 화면(customer)으로 보냄
-  (function(){
-    var p = new URLSearchParams(location.search);
-    var store = p.get('store');
-    location.replace(store ? 'customer.html?store='+encodeURIComponent(store) : 'home.html');
-  })();
-</script>
+<link rel="stylesheet" href="app.css">
+<style>
+  .wrap{min-height:100%; display:flex; flex-direction:column; background:var(--teal);}
+  .wtop{display:flex; padding:14px 16px 0;}
+  .wlang{margin-left:auto; background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:9px; padding:6px 9px; font-size:12px; font-family:inherit;}
+  .wlang option{color:#16323A;}
+  .wmid{flex:1; display:flex; flex-direction:column; justify-content:center; padding:8px 22px 28px; max-width:460px; margin:0 auto; width:100%;}
+  .wbrand{color:#fff; font-size:38px; font-weight:800; letter-spacing:-.5px; text-align:center;}
+  .wtag{color:rgba(255,255,255,.92); font-size:15px; text-align:center; margin:6px 0 26px;}
+  .wcard{background:#fff; border-radius:20px; padding:22px 20px;}
+  .wcard label{display:block; font-size:13px; color:var(--muted); font-weight:700; margin-bottom:9px; line-height:1.4;}
+  .wcard input{width:100%; padding:15px 16px; border:1.5px solid #d7e2df; border-radius:13px; font-size:18px; font-weight:700; font-family:inherit; color:var(--ink); text-align:center;}
+  .wcard input:focus{outline:none; border-color:var(--teal);}
+  .nstatus{min-height:18px; font-size:12.5px; font-weight:700; margin:8px 2px 0; text-align:center;}
+  .nstatus.ok{color:var(--teal);} .nstatus.bad{color:var(--warm);} .nstatus.dim{color:#9aa7a4;}
+  .wcard .bigbtn{margin-top:14px;}
+  .wcard .bigbtn:disabled{background:#bcc9c6;}
+  .owner{display:block; text-align:center; margin-top:22px; color:rgba(255,255,255,.78); font-size:13px; text-decoration:none; padding:8px;}
+  .owner:hover{color:#fff;}
+</style>
 </head>
 <body>
-<noscript><a href="home.html">QuesMe 둘러보기로 이동</a></noscript>
+<div class="wrap">
+  <div class="wtop">
+    <select id="lang" class="wlang" onchange="setLang(this.value)">
+      <option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option><option value="zh">中文</option><option value="ja">日本語</option><option value="hi">हिन्दी</option><option value="ru">Русский</option>
+    </select>
+  </div>
+  <div class="wmid">
+    <div class="wbrand">QuesMe</div>
+    <div class="wtag" id="tag"></div>
+    <div class="wcard">
+      <label id="nlabel"></label>
+      <input id="nick" maxlength="12" autocapitalize="off" autocomplete="off" oninput="onNick()" onkeydown="if(event.key==='Enter')start()">
+      <div class="nstatus dim" id="nstatus"></div>
+      <button class="bigbtn" id="go" onclick="start()"></button>
+    </div>
+    <a class="owner" id="owner" href="admin.html"></a>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
+
+  // 매장 QR/딥링크로 들어오면 바로 그 매장 손님화면으로
+  var store = new URLSearchParams(location.search).get('store');
+  if(store){ location.replace('customer.html?store='+encodeURIComponent(store)); return; }
+
+  var supa = window.supabase.createClient(QUESME_CONFIG.url, QUESME_CONFIG.anonKey);
+  var lang = I18N.detectLang();
+  function t(k){ return I18N.t(lang,k); }
+
+  var nickEl=document.getElementById('nick'), statusEl=document.getElementById('nstatus'), goEl=document.getElementById('go');
+  var checkT=null, taken=false, lastChecked='';
+
+  function chrome(){
+    document.getElementById('lang').value=lang;
+    document.getElementById('tag').textContent=t('home.tagline');
+    document.getElementById('nlabel').textContent=t('start.nickLabel');
+    nickEl.placeholder=t('start.nickPh');
+    goEl.textContent=t('start.go');
+    document.getElementById('owner').textContent=t('start.owner')+' →';
+  }
+  window.setLang=function(v){ lang=v; try{localStorage.setItem('quesme:lang',v);}catch(e){} chrome(); if(nickEl.value.trim()) showStatus(); };
+
+  function setStatus(msg,cls){ statusEl.textContent=msg; statusEl.className='nstatus '+cls; }
+  function showStatus(){ setStatus(taken?t('start.taken'):t('start.available'), taken?'bad':'ok'); }
+
+  function check(){
+    var v=nickEl.value.trim().toLowerCase(); lastChecked=v;
+    if(!v){ taken=false; setStatus('',''); goEl.disabled=false; return; }
+    return supa.from('quesme_entries').select('nick').in('status',['waiting','called']).then(function(res){
+      var set=(res.data||[]).map(function(r){return (r.nick||'').trim().toLowerCase();});
+      taken = set.indexOf(v)>=0;
+      showStatus(); goEl.disabled=taken;
+    });
+  }
+  window.onNick=function(){
+    if(checkT) clearTimeout(checkT);
+    var v=nickEl.value.trim();
+    if(!v){ taken=false; setStatus('',''); goEl.disabled=false; return; }
+    setStatus(t('start.checking'),'dim'); goEl.disabled=true;
+    checkT=setTimeout(check,400);
+  };
+
+  window.start=function(){
+    var v=nickEl.value.trim();
+    if(!v){ nickEl.focus(); return; }
+    goEl.disabled=true; setStatus(t('start.checking'),'dim');
+    Promise.resolve(check()).then(function(){
+      if(taken){ goEl.disabled=true; nickEl.focus(); return; }
+      try{ localStorage.setItem('quesme:nick', v); }catch(e){}
+      location.href='home.html';
+    });
+  };
+
+  // 저장된 닉네임 있으면 채워서 시작
+  try{ var saved=localStorage.getItem('quesme:nick'); if(saved){ nickEl.value=saved; } }catch(e){}
+  chrome();
+  if(nickEl.value.trim()) onNick();
+})();
+</script>
 </body>
 </html>
