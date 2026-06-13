@@ -79,6 +79,13 @@
     'con.footHint': { ko:'“다음 손님 호출”을 누르면 대기 1순위 팀이 전광판에 표시됩니다', en:'Tap "Call next" to show the first group on the board', th:'กด "เรียกคิวถัดไป" เพื่อแสดงคิวแรกบนจอ' },
     'con.persons': { ko:'{n}명', en:'{n} ppl', th:'{n} คน' },
     'con.resCount': { ko:'예약 {n}건', en:'{n} reservations', th:'จอง {n} รายการ' },
+    'con.loginTitle': { ko:'직원 로그인', en:'Staff login', th:'เข้าสู่ระบบพนักงาน' },
+    'con.email': { ko:'이메일', en:'Email', th:'อีเมล' },
+    'con.pw': { ko:'비밀번호', en:'Password', th:'รหัสผ่าน' },
+    'con.loginBtn': { ko:'로그인', en:'Log in', th:'เข้าสู่ระบบ' },
+    'con.loginErr': { ko:'로그인 실패 — 이메일/비밀번호를 확인하세요', en:'Login failed — check email & password', th:'เข้าสู่ระบบไม่สำเร็จ — ตรวจสอบอีเมล/รหัสผ่าน' },
+    'con.loginNote': { ko:'지정된 직원만 접근할 수 있어요', en:'Authorized staff only', th:'เฉพาะพนักงานที่ได้รับอนุญาต' },
+    'con.logout': { ko:'로그아웃', en:'Log out', th:'ออกจากระบบ' },
 
     /* ----- 홈 / 디스커버리 ----- */
     'home.tagline': { ko:'동네 가게, 줄 서지 말고', en:'Skip the line at local shops', th:'ร้านใกล้คุณ ไม่ต้องต่อแถว', zh:'附近门店，免排队', ja:'近くのお店、並ばずに', hi:'पास की दुकानें, बिना कतार', ru:'Локальные места без очередей' },

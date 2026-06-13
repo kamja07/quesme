@@ -23,15 +23,37 @@
   .conlang{background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:5px 7px; font-size:12px; font-family:inherit;}
   .conlang option{color:#16323A;}
   .cnoChip{display:inline-block; background:#eef3f1; color:#0a5f4a; font-size:11px; font-weight:800; padding:2px 7px; border-radius:10px; margin-left:5px;}
+  .logoutbtn{margin-left:8px; background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:5px 10px; font-size:12px; font-weight:700;}
+  .loginwrap{position:fixed; inset:0; background:#0c1a1f; display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;}
+  .logincard{background:#fff; border-radius:18px; padding:28px 24px; width:100%; max-width:360px;}
+  .loginh{display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; color:var(--teal); justify-content:center;}
+  .loginh .mk{background:var(--warm);}
+  .logint{text-align:center; font-size:14px; color:var(--muted); margin:6px 0 18px; font-weight:700;}
+  .logincard input{width:100%; padding:13px; border:1.5px solid #d7e2df; border-radius:11px; font-size:15px; font-family:inherit; margin-bottom:10px;}
+  .logincard input:focus{outline:none; border-color:var(--teal);}
+  .loginErr{color:var(--warm); font-size:13px; text-align:center; margin-top:10px; min-height:1px;}
+  .loginNote{color:#9aa7a4; font-size:12px; text-align:center; margin-top:12px;}
 </style>
 </head>
 <body>
+<div class="loginwrap" id="loginwrap">
+  <div class="logincard">
+    <div class="loginh"><span class="mk">강남</span> QuesMe</div>
+    <div class="logint" id="loginT"></div>
+    <input id="liEmail" type="email" autocomplete="username">
+    <input id="liPw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="bigbtn" id="liBtn" onclick="doLogin()"></button>
+    <div class="loginErr" id="liErr"></div>
+    <div class="loginNote" id="liNote"></div>
+  </div>
+</div>
 <div class="con">
   <div class="con-top">
     <span class="emblem"><span class="mk" id="mk"></span><span class="nm"><b id="storeName">강남바베큐 라끄라방점</b><small id="subtitle">QuesMe</small></span></span>
     <select id="conLangSel" class="conlang" onchange="setConLang(this.value)">
       <option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option>
     </select>
+    <button class="logoutbtn" id="logoutBtn" onclick="doLogout()" style="display:none"></button>
   </div>
   <div class="tcfg" id="tcfg"></div>
   <div class="nameset"><div class="nl" id="namesTitle"></div><div class="grid" id="nameGrid"></div><div class="help" id="nameHelp"></div></div>
@@ -65,6 +87,13 @@
   window.callNext=function(){ store.callNext(); };
   window.upLogo=function(input){ var f=input.files&&input.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ store.setLogo(r.result); }; r.readAsDataURL(f); };
   window.rmLogo=function(){ store.setLogo(null); };
+  window.doLogin=function(){
+    var em=(document.getElementById('liEmail').value||'').trim(), pw=document.getElementById('liPw').value||'';
+    document.getElementById('liErr').textContent='';
+    store.signIn(em,pw).then(function(res){ if(res && res.error){ document.getElementById('liErr').textContent=T('con.loginErr'); } })
+      .catch(function(){ document.getElementById('liErr').textContent=T('con.loginErr'); });
+  };
+  window.doLogout=function(){ store.signOut(); };
   function fmtWait(ts){ var s=Math.floor((Date.now()-ts)/1000); return s<60? s+'s' : Math.floor(s/60)+'m'; }
 
   function buildNames(){  // DB값으로 채우되, 타이핑 중이면 건너뜀(포커스 유지)
@@ -85,6 +114,12 @@
 
   function render(st){
     document.getElementById('conLangSel').value = conLang;
+    document.getElementById('loginT').textContent = T('con.loginTitle');
+    document.getElementById('liEmail').placeholder = T('con.email');
+    document.getElementById('liPw').placeholder = T('con.pw');
+    document.getElementById('liBtn').textContent = T('con.loginBtn');
+    document.getElementById('liNote').textContent = T('con.loginNote');
+    document.getElementById('logoutBtn').textContent = T('con.logout');
     document.getElementById('mk').innerHTML = st.logo ? '<img src="'+st.logo+'" alt="logo">' : '강남';
     document.getElementById('storeName').textContent = I18N.storeName(st, conLang);
     document.getElementById('subtitle').textContent = 'QuesMe · ' + T('con.subtitle');
@@ -126,6 +161,11 @@
     buildNames();
   }
 
+  store.onAuth(function(session){
+    var inn = !!session;
+    document.getElementById('loginwrap').style.display = inn ? 'none' : 'flex';
+    document.getElementById('logoutBtn').style.display = inn ? '' : 'none';
+  });
   store.subscribe(render);
   setInterval(function(){ render(store.getState()); var t=new Date(); document.getElementById('clock')&&0; }, 1000);
 })();

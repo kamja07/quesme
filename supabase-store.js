@@ -120,12 +120,11 @@
   QueueStore.prototype.yieldServing = function(id, n){
     var st=this.state; if(!st.serving || st.serving.id!==id) return; var w=st.waiting; if(!w.length) return;
     n = Math.max(1, Math.min(n||1, w.length));
-    var jumperFirst = w[0];                                   // gets called now
     var anchorPrev = w[n-1];                                  // me lands right after this
     var anchorNext = w[n];                                    // ... and before this
     var meSort = anchorNext ? (anchorPrev.sort_at+anchorNext.sort_at)/2 : anchorPrev.sort_at+1;
+    // 양보: 내 순번만 n칸 뒤로 (대기로 복귀). 다음 호출은 직원이 함.
     this._update(st.serving.id, { status:'waiting', sort_at:meSort, passes:(st.serving.passes||0)+n });
-    this._update(jumperFirst.id, { status:'called', called_at:new Date(nowTs()).toISOString() });
   };
   QueueStore.prototype.cancel = function(id){ this._update(id, { status:'cancelled' }); };
   QueueStore.prototype.cancelReservation = function(id){
@@ -163,6 +162,15 @@
 
   QueueStore.prototype._update = function(id, patch){ this.client.from('quesme_entries').update(patch).eq('id', id).then(this._after(this)).catch(this._after(this)); };
   QueueStore.prototype._after = function(self){ return function(){ self._fetchSoon(); }; };
+
+  /* ---- staff auth ---- */
+  QueueStore.prototype.signIn = function(email, password){ return this.client.auth.signInWithPassword({ email:email, password:password }); };
+  QueueStore.prototype.signOut = function(){ return this.client.auth.signOut(); };
+  QueueStore.prototype.onAuth = function(cb){
+    var self = this;
+    this.client.auth.getSession().then(function(r){ cb((r.data && r.data.session) || null); });
+    this.client.auth.onAuthStateChange(function(_e, session){ cb(session || null); });
+  };
 
   global.QueueStore = QueueStore;
 })(window);
