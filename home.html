@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E7A5F">
+<title>QuesMe</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="app.css">
+<style>
+  .home{max-width:560px; margin:0 auto; min-height:100%; background:#fff;}
+  .home-top{background:var(--teal); color:#fff; padding:18px 18px 16px; position:sticky; top:0; z-index:5;}
+  .home-top .row1{display:flex; align-items:center; gap:10px;}
+  .home-top .brand{font-size:22px; font-weight:800;}
+  .home-top .tag{font-size:12.5px; opacity:.92; margin-top:2px;}
+  .home-top .langsel{margin-left:auto; background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:9px; padding:6px 8px; font-size:12px; font-family:inherit;}
+  .home-top .langsel option{color:#16323A;}
+  .searchbar{margin-top:13px; display:flex; align-items:center; gap:8px; background:#fff; border-radius:12px; padding:11px 13px;}
+  .searchbar input{flex:1; border:none; outline:none; font-size:15px; font-family:inherit; color:var(--ink);}
+  .searchbar .ic{color:var(--muted);}
+  .filters{display:flex; gap:7px; padding:13px 18px 4px; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .chip{flex:0 0 auto; background:#eef3f1; color:#41514f; border-radius:20px; padding:8px 14px; font-size:13px; font-weight:700; white-space:nowrap;}
+  .chip.on{background:var(--teal); color:#fff;}
+  .arearow{padding:6px 18px 2px;}
+  .arearow select{border:1px solid #d7e2df; border-radius:10px; padding:8px 11px; font-size:13px; font-family:inherit; color:var(--ink); background:#fff;}
+  .list{padding:8px 14px 28px;}
+  .scard{display:flex; align-items:center; gap:13px; padding:13px; border:1px solid #eef3f1; border-radius:15px; margin-bottom:10px; cursor:pointer; transition:.12s; text-decoration:none; color:var(--ink);}
+  .scard:hover{border-color:var(--teal-line); box-shadow:0 4px 14px rgba(0,0,0,.05);}
+  .scard .logo{width:52px; height:52px; flex:0 0 52px; border-radius:14px; background:var(--teal-l); display:flex; align-items:center; justify-content:center; font-size:24px; overflow:hidden;}
+  .scard .logo img{width:100%; height:100%; object-fit:cover;}
+  .scard .mid{flex:1; min-width:0;}
+  .scard .nm{font-size:16px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .scard .sub{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .wbadge{flex:0 0 auto; font-size:12px; font-weight:800; padding:6px 11px; border-radius:20px; text-align:center;}
+  .wbadge.wait{background:#fff4dd; color:#9a6a00;}
+  .wbadge.free{background:var(--teal-l); color:var(--teal);}
+  .empty{text-align:center; color:#9aa7a4; padding:50px 20px; font-size:14px;}
+  .gate{margin:13px 14px 2px; background:#fbfdfc; border:1px solid #e2e9e7; border-radius:14px; padding:13px 14px;}
+  .gate-t{font-size:12.5px; font-weight:700; color:var(--muted); margin-bottom:8px;}
+  .gate-row{display:flex; gap:8px;}
+  .gate-row input{flex:1; border:1.5px solid #d7e2df; border-radius:10px; padding:11px 12px; font-size:15px; font-family:inherit; color:var(--ink);}
+  .gate-row input:focus{outline:none; border-color:var(--teal);}
+  .gate-row .btn{padding:0 18px; font-size:14px;}
+  .gate-err{font-size:12px; color:var(--warm); margin-top:7px; min-height:1px;}
+</style>
+</head>
+<body>
+<div class="home">
+  <div class="home-top">
+    <div class="row1">
+      <div><div class="brand">QuesMe</div><div class="tag" id="tag"></div></div>
+      <select id="langSel" class="langsel" onchange="setLang(this.value)">
+        <option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option><option value="zh">中文</option><option value="ja">日本語</option><option value="hi">हिन्दी</option><option value="ru">Русский</option>
+      </select>
+    </div>
+    <div class="searchbar"><span class="ic">🔍</span><input id="q" oninput="onSearch(this.value)"></div>
+  </div>
+  <div class="gate">
+    <div class="gate-t" id="gateT"></div>
+    <div class="gate-row"><input id="code" autocapitalize="off" autocomplete="off" onkeydown="if(event.key==='Enter')goEnter()"><button class="btn" id="enterBtn" onclick="goEnter()"></button></div>
+    <div class="gate-err" id="codeErr"></div>
+  </div>
+  <div class="filters" id="cats"></div>
+  <div class="arearow"><select id="area" onchange="onArea(this.value)"></select></div>
+  <div class="list" id="list"></div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
+  var supa = window.supabase.createClient(QUESME_CONFIG.url, QUESME_CONFIG.anonKey);
+  var lang = I18N.detectLang();
+  function t(k){ return I18N.t(lang,k); }
+  function tn(k,n){ return I18N.t(lang,k).replace('{n}',n); }
+
+  var CATS = ['all','restaurant','cafe','clinic','beauty','massage','bank','gov'];
+  var CAT_ICON = { restaurant:'🍽', cafe:'☕', clinic:'🏥', bank:'🏦', beauty:'💅', massage:'💆', gov:'🏛', all:'🏪' };
+  var AREA = {
+    latkrabang:{ko:'라끄라방',en:'Lat Krabang',th:'ลาดกระบัง'},
+    bangna:{ko:'방나',en:'Bangna',th:'บางนา'},
+    asok:{ko:'아속',en:'Asok',th:'อโศก'},
+    thonglor:{ko:'텅러',en:'Thonglor',th:'ทองหล่อ'},
+    siam:{ko:'시암',en:'Siam',th:'สยาม'}
+  };
+  function areaName(code){ var a=AREA[code]; if(!a) return code||''; return a[lang]||a.en||a.ko||code; }
+
+  var stores=[], counts={}, filter={ q:'', cat:'all', area:'all' };
+
+  window.setLang=function(v){ lang=v; try{localStorage.setItem('quesme:lang',v);}catch(e){} renderChrome(); render(); };
+  window.onSearch=function(v){ filter.q=(v||'').toLowerCase(); render(); };
+  window.setCat=function(c){ filter.cat=c; render(); renderChrome(); };
+  window.onArea=function(a){ filter.area=a; render(); };
+  window.goEnter=function(){
+    var code=(document.getElementById('code').value||'').trim().toLowerCase();
+    if(!code) return;
+    var ok = !stores.length || stores.some(function(s){ return (s.slug||'').toLowerCase()===code; });
+    if(ok){ location.href='customer.html?store='+encodeURIComponent(code); }
+    else { document.getElementById('codeErr').textContent=t('home.notFound'); }
+  };
+
+  function renderChrome(){
+    document.getElementById('langSel').value=lang;
+    document.getElementById('tag').textContent=t('home.tagline');
+    document.getElementById('q').placeholder=t('home.search');
+    document.getElementById('gateT').textContent=t('home.codeTitle');
+    document.getElementById('code').placeholder=t('home.codePh');
+    document.getElementById('enterBtn').textContent=t('home.enter');
+    document.getElementById('cats').innerHTML = CATS.map(function(c){
+      return '<button class="chip '+(filter.cat===c?'on':'')+'" onclick="setCat(\''+c+'\')">'+(c==='all'?'':CAT_ICON[c]+' ')+t('cat.'+c)+'</button>';
+    }).join('');
+    var areas = Object.keys(stores.reduce(function(m,s){ if(s.area)m[s.area]=1; return m; },{}));
+    var sel=document.getElementById('area');
+    sel.innerHTML = '<option value="all">📍 '+t('home.allAreas')+'</option>' + areas.map(function(a){ return '<option value="'+a+'"'+(filter.area===a?' selected':'')+'>📍 '+areaName(a)+'</option>'; }).join('');
+  }
+
+  function storeName(s){ var n=s.names||{}; return n[lang]||n.en||n.th||n.ko||s.slug; }
+
+  function render(){
+    var list=document.getElementById('list');
+    var rows = stores.filter(function(s){
+      if(filter.cat!=='all' && s.category!==filter.cat) return false;
+      if(filter.area!=='all' && s.area!==filter.area) return false;
+      if(filter.q){ var hay=JSON.stringify(s.names||{}).toLowerCase()+' '+(s.slug||''); if(hay.indexOf(filter.q)<0) return false; }
+      return true;
+    });
+    if(!rows.length){ list.innerHTML='<div class="empty">'+t('home.empty')+'</div>'; return; }
+    list.innerHTML = rows.map(function(s){
+      var n=counts[s.slug]||0;
+      var badge = n>0 ? '<span class="wbadge wait">'+tn('home.waitTeams',n)+'</span>' : '<span class="wbadge free">'+t('home.noWait')+'</span>';
+      var logo = s.logo ? '<img src="'+s.logo+'" alt="">' : (CAT_ICON[s.category]||'🏪');
+      var sub = t('cat.'+(s.category||'all')) + (s.area?' · '+areaName(s.area):'');
+      return '<a class="scard" href="customer.html?store='+encodeURIComponent(s.slug)+'">'+
+        '<div class="logo">'+logo+'</div>'+
+        '<div class="mid"><div class="nm">'+storeName(s)+'</div><div class="sub">'+sub+'</div></div>'+
+        badge+'</a>';
+    }).join('');
+  }
+
+  function loadCounts(){
+    supa.from('quesme_entries').select('store_slug').in('status',['waiting','called']).then(function(res){
+      var c={}; (res.data||[]).forEach(function(r){ c[r.store_slug]=(c[r.store_slug]||0)+1; }); counts=c; render();
+    });
+  }
+  function loadStores(){
+    supa.from('quesme_stores').select('*').then(function(res){
+      stores=(res.data||[]).sort(function(a,b){ return (a.slug||'').localeCompare(b.slug||''); });
+      renderChrome(); render(); loadCounts();
+    });
+  }
+
+  renderChrome(); loadStores();
+  // live wait counts
+  supa.channel('quesme-home').on('postgres_changes',{event:'*',schema:'public',table:'quesme_entries'},function(){ loadCounts(); }).subscribe();
+})();
+</script>
+</body>
+</html>

@@ -78,7 +78,27 @@
     'con.empty': { ko:'대기 팀 없음', en:'No one waiting', th:'ไม่มีคิว' },
     'con.footHint': { ko:'“다음 손님 호출”을 누르면 대기 1순위 팀이 전광판에 표시됩니다', en:'Tap "Call next" to show the first group on the board', th:'กด "เรียกคิวถัดไป" เพื่อแสดงคิวแรกบนจอ' },
     'con.persons': { ko:'{n}명', en:'{n} ppl', th:'{n} คน' },
-    'con.resCount': { ko:'예약 {n}건', en:'{n} reservations', th:'จอง {n} รายการ' }
+    'con.resCount': { ko:'예약 {n}건', en:'{n} reservations', th:'จอง {n} รายการ' },
+
+    /* ----- 홈 / 디스커버리 ----- */
+    'home.tagline': { ko:'동네 가게, 줄 서지 말고', en:'Skip the line at local shops', th:'ร้านใกล้คุณ ไม่ต้องต่อแถว', zh:'附近门店，免排队', ja:'近くのお店、並ばずに', hi:'पास की दुकानें, बिना कतार', ru:'Локальные места без очередей' },
+    'home.search': { ko:'가게 이름 검색', en:'Search shops', th:'ค้นหาร้าน', zh:'搜索门店', ja:'お店を検索', hi:'दुकान खोजें', ru:'Поиск мест' },
+    'home.allAreas': { ko:'전체 지역', en:'All areas', th:'ทุกพื้นที่', zh:'所有地区', ja:'全地域', hi:'सभी क्षेत्र', ru:'Все районы' },
+    'home.waitTeams': { ko:'대기 {n}팀', en:'{n} waiting', th:'รอ {n} คิว', zh:'{n} 组等待', ja:'{n}組待ち', hi:'{n} प्रतीक्षारत', ru:'{n} в очереди' },
+    'home.noWait': { ko:'바로 입장', en:'No wait', th:'ไม่ต้องรอ', zh:'无需等待', ja:'待ちなし', hi:'कोई प्रतीक्षा नहीं', ru:'Без очереди' },
+    'home.empty': { ko:'검색 결과가 없어요', en:'No shops found', th:'ไม่พบร้าน', zh:'未找到门店', ja:'お店が見つかりません', hi:'कोई दुकान नहीं मिली', ru:'Ничего не найдено' },
+    'cat.all': { ko:'전체', en:'All', th:'ทั้งหมด', zh:'全部', ja:'すべて', hi:'सभी', ru:'Все' },
+    'cat.restaurant': { ko:'식당', en:'Restaurant', th:'ร้านอาหาร', zh:'餐厅', ja:'レストラン', hi:'रेस्तराँ', ru:'Ресторан' },
+    'cat.cafe': { ko:'카페', en:'Cafe', th:'คาเฟ่', zh:'咖啡', ja:'カフェ', hi:'कैफ़े', ru:'Кафе' },
+    'cat.clinic': { ko:'병원·클리닉', en:'Clinic', th:'คลินิก', zh:'诊所', ja:'クリニック', hi:'क्लिनिक', ru:'Клиника' },
+    'cat.bank': { ko:'은행', en:'Bank', th:'ธนาคาร', zh:'银行', ja:'銀行', hi:'बैंक', ru:'Банк' },
+    'cat.beauty': { ko:'네일·뷰티', en:'Beauty', th:'ความงาม', zh:'美容', ja:'ビューティー', hi:'ब्यूटी', ru:'Красота' },
+    'cat.massage': { ko:'마사지', en:'Massage', th:'นวด', zh:'按摩', ja:'マッサージ', hi:'मसाज', ru:'Массаж' },
+    'cat.gov': { ko:'관공서', en:'Public office', th:'หน่วยงานรัฐ', zh:'政府机构', ja:'役所', hi:'सरकारी कार्यालय', ru:'Госучреждение' },
+    'home.codeTitle': { ko:'매장 코드로 바로 입장', en:'Enter by store code', th:'เข้าด้วยรหัสร้าน', zh:'用门店代码进入', ja:'店舗コードで入る', hi:'स्टोर कोड से प्रवेश', ru:'Вход по коду заведения' },
+    'home.codePh': { ko:'매장 코드 입력 (예: gangnam)', en:'Store code (e.g. gangnam)', th:'รหัสร้าน (เช่น gangnam)', zh:'门店代码（如 gangnam）', ja:'店舗コード（例: gangnam）', hi:'स्टोर कोड (जैसे gangnam)', ru:'Код (напр. gangnam)' },
+    'home.enter': { ko:'입장', en:'Enter', th:'เข้า', zh:'进入', ja:'入る', hi:'प्रवेश', ru:'Войти' },
+    'home.notFound': { ko:'매장을 찾을 수 없어요', en:'Store not found', th:'ไม่พบร้านนี้', zh:'未找到门店', ja:'店舗が見つかりません', hi:'स्टोर नहीं मिला', ru:'Заведение не найдено' }
   };
 
   function t(lang, key){ var e = S[key]; if (!e) return key; return e[lang] || e.en || e.ko || key; }
