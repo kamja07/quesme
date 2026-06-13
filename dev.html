@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E7A5F">
+<title>QuesMe — 개발 허브</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="launch">
+  <h1>QuesMe</h1>
+  <p>가상 대기열 플랫폼 · 매장: <b id="slugName">gangnam</b> <span style="color:#9aa7a4">(URL <code>?store=…</code> 로 매장 전환)</span></p>
+
+  <div class="cards">
+    <a class="lcard" id="lkCust"><div class="ico">📱</div><h3>손님 웹앱</h3><small>QR로 손님이 보는 화면. 줄서기 / 시간 예약 / 입장 안내.</small></a>
+    <a class="lcard" id="lkCon"><div class="ico">🖥</div><h3>매장 콘솔</h3><small>좌석 설정 · 대기 명단 · 테이블 회전. 카운터 태블릿용.</small></a>
+    <a class="lcard" id="lkBoard"><div class="ico">📺</div><h3>전광판</h3><small>NOW SEATING. 벽걸이 모니터용.</small></a>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-store.js"></script>
+<script>
+(function(){
+  var slug = new URLSearchParams(location.search).get('store') || 'gangnam';
+  document.getElementById('slugName').textContent = slug;
+  var q = '?store='+encodeURIComponent(slug);
+  document.getElementById('lkCust').href = 'customer.html'+q;
+  document.getElementById('lkCon').href = 'console.html'+q;
+  document.getElementById('lkBoard').href = 'board.html'+q;
+})();
+</script>
+</body>
+</html>

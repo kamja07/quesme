@@ -2,61 +2,20 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0E7A5F">
-<title>QuesMe — 매장 허브</title>
+<title>QuesMe</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="app.css">
+<script>
+  // 루트로 들어온 손님을 둘러보기(home) 또는 매장 화면(customer)으로 보냄
+  (function(){
+    var p = new URLSearchParams(location.search);
+    var store = p.get('store');
+    location.replace(store ? 'customer.html?store='+encodeURIComponent(store) : 'home.html');
+  })();
+</script>
 </head>
 <body>
-<div class="launch">
-  <h1>QuesMe</h1>
-  <p>가상 대기열 플랫폼 · 매장: <b id="slugName">gangnam</b> <span style="color:#9aa7a4">(URL <code>?store=…</code> 로 매장 전환)</span></p>
-
-  <div class="cards">
-    <a class="lcard" id="lkCust"><div class="ico">📱</div><h3>손님 웹앱</h3><small>QR로 손님이 보는 화면. 줄서기 / 시간 예약 / 입장 안내.</small></a>
-    <a class="lcard" id="lkCon"><div class="ico">🖥</div><h3>매장 콘솔</h3><small>좌석 설정 · 대기 명단 · 테이블 회전. 카운터 태블릿용.</small></a>
-    <a class="lcard" id="lkBoard"><div class="ico">📺</div><h3>전광판</h3><small>NOW SEATING. 벽걸이 모니터용.</small></a>
-  </div>
-
-  <div style="margin-top:28px; background:#fff; border:1px solid #e2e9e7; border-radius:14px; padding:18px;">
-    <h3 style="margin:0 0 4px; color:var(--ink); font-size:15px;">실시간 동기화 테스트</h3>
-    <p style="margin:0 0 12px; font-size:13px; color:var(--muted); line-height:1.6;">
-      세 화면을 <b>각각 다른 탭/창</b>으로 열어보세요. 한 곳에서 줄서기·배정하면 나머지가 즉시 갱신됩니다
-      (지금은 같은 브라우저 내 BroadcastChannel, 추후 Supabase로 교체 시 다른 기기 간에도 동일).
-    </p>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="btn sm" onclick="addGuest()">+ 손님 도착 (시뮬)</button>
-      <button class="btn ghost sm" id="autoBtn" onclick="toggleAuto()">▶ 자동 진행</button>
-      <button class="btn gray sm" onclick="resetAll()">초기화</button>
-    </div>
-  </div>
-</div>
-
-<script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-store.js"></script>
-<script>
-(function(){
-  var slug = new URLSearchParams(location.search).get('store') || 'gangnam';
-  var store = new QueueStore(slug);
-  document.getElementById('slugName').textContent = slug;
-  var q = '?store='+encodeURIComponent(slug);
-  document.getElementById('lkCust').href = 'customer.html'+q;
-  document.getElementById('lkCon').href = 'console.html'+q;
-  document.getElementById('lkBoard').href = 'board.html'+q;
-
-  var timer = null;
-  window.addGuest = function(){ store.addSampleGuest(); };
-  window.resetAll = function(){ if(timer){clearInterval(timer);timer=null;document.getElementById('autoBtn').textContent='▶ 자동 진행';document.getElementById('autoBtn').classList.add('ghost');} store.reset(); };
-  window.toggleAuto = function(){
-    var b=document.getElementById('autoBtn');
-    if(timer){ clearInterval(timer); timer=null; b.textContent='▶ 자동 진행'; b.classList.add('ghost'); }
-    else { timer=setInterval(function(){ var st=store.getState(); if(Math.random()<0.5 && st.waiting.length){ store.callNext(); } else if(st.waiting.length<10){ store.addSampleGuest(); } }, 2400); b.textContent='⏸ 자동 멈춤'; b.classList.remove('ghost'); }
-  };
-
-  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
-})();
-</script>
+<noscript><a href="home.html">QuesMe 둘러보기로 이동</a></noscript>
 </body>
 </html>

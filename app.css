@@ -4,7 +4,8 @@
   --amber:#e09712; --warm:#d9534f; --warm-l:#fdecea;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{margin:0; height:100%;}
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%;}   /* LINE/인앱 브라우저 글자 자동확대 방지 */
+html,body{margin:0; height:100%; width:100%; max-width:100%; overflow-x:hidden;}
 body{font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif; color:var(--ink); background:var(--bg);}
 button{font-family:inherit; cursor:pointer; border:none; border-radius:10px; font-weight:700; transition:.12s;}
 button:active{transform:translateY(1px);}

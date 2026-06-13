@@ -1,8 +1,8 @@
 /* QuesMe service worker — app shell cache + push scaffold (P1 skeleton) */
-var CACHE = 'quesme-v4';
+var CACHE = 'quesme-v5';
 var SHELL = [
   './', 'index.html', 'home.html', 'customer.html', 'console.html', 'board.html', 'qr.html',
-  'admin.html', 'register.html',
+  'admin.html', 'register.html', 'dev.html',
   'app.css', 'i18n.js', 'config.js', 'supabase-store.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png'
 ];
