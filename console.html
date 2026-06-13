@@ -50,7 +50,9 @@
 </div>
 
 <script src="i18n.js"></script>
-<script src="queue-store.js"></script>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-store.js"></script>
 <script>
 (function(){
   var slug = new URLSearchParams(location.search).get('store') || 'gangnam';
@@ -65,13 +67,18 @@
   window.rmLogo=function(){ store.setLogo(null); };
   function fmtWait(ts){ var s=Math.floor((Date.now()-ts)/1000); return s<60? s+'s' : Math.floor(s/60)+'m'; }
 
-  function buildNames(){  // 입력칸은 한 번만 렌더(타이핑 중 포커스 유지)
-    var st = store.getState(); var names = (st.store && st.store.names) || {};
-    document.getElementById('nameGrid').innerHTML = I18N.LANGS.map(function(L){
+  function buildNames(){  // DB값으로 채우되, 타이핑 중이면 건너뜀(포커스 유지)
+    var grid = document.getElementById('nameGrid');
+    if(document.activeElement && document.activeElement.closest && document.activeElement.closest('#nameGrid')) return;
+    var names = (store.getState().store && store.getState().store.names) || {};
+    var html = I18N.LANGS.map(function(L){
       var v = (names[L.code]||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
       return '<label class="ni"><b>'+L.label+'</b><input data-lang="'+L.code+'" value="'+v+'" placeholder="'+L.label+'"></label>';
     }).join('');
-    Array.prototype.forEach.call(document.querySelectorAll('#nameGrid input'), function(inp){
+    if(grid.getAttribute('data-sig') === html) return;   // 변화 없으면 스킵
+    grid.setAttribute('data-sig', html);
+    grid.innerHTML = html;
+    Array.prototype.forEach.call(grid.querySelectorAll('input'), function(inp){
       inp.addEventListener('change', function(){ store.setStoreName(inp.getAttribute('data-lang'), inp.value); });
     });
   }
@@ -116,9 +123,9 @@
     document.getElementById('foot').textContent = st.reservations.length
       ? Tn('con.resCount', st.reservations.length)+': '+st.reservations.map(function(r){return r.time+' '+r.nick+'('+r.size+')';}).join(', ')
       : T('con.footHint');
+    buildNames();
   }
 
-  buildNames();
   store.subscribe(render);
   setInterval(function(){ render(store.getState()); var t=new Date(); document.getElementById('clock')&&0; }, 1000);
 })();
