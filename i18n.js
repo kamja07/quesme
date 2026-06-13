@@ -105,7 +105,10 @@
     'home.codeTitle': { ko:'매장 코드로 바로 입장', en:'Enter by store code', th:'เข้าด้วยรหัสร้าน', zh:'用门店代码进入', ja:'店舗コードで入る', hi:'स्टोर कोड से प्रवेश', ru:'Вход по коду заведения' },
     'home.codePh': { ko:'매장 코드 입력 (예: gangnam)', en:'Store code (e.g. gangnam)', th:'รหัสร้าน (เช่น gangnam)', zh:'门店代码（如 gangnam）', ja:'店舗コード（例: gangnam）', hi:'स्टोर कोड (जैसे gangnam)', ru:'Код (напр. gangnam)' },
     'home.enter': { ko:'입장', en:'Enter', th:'เข้า', zh:'进入', ja:'入る', hi:'प्रवेश', ru:'Войти' },
-    'home.notFound': { ko:'매장을 찾을 수 없어요', en:'Store not found', th:'ไม่พบร้านนี้', zh:'未找到门店', ja:'店舗が見つかりません', hi:'स्टोर नहीं मिला', ru:'Заведение не найдено' }
+    'home.notFound': { ko:'매장을 찾을 수 없어요', en:'Store not found', th:'ไม่พบร้านนี้', zh:'未找到门店', ja:'店舗が見つかりません', hi:'स्टोर नहीं मिला', ru:'Заведение не найдено' },
+    'home.forBiz': { ko:'매장 사장님이세요?', en:'Own a shop?', th:'เป็นเจ้าของร้าน?', zh:'是商家吗？', ja:'お店の方ですか？', hi:'दुकान के मालिक हैं?', ru:'Владелец заведения?' },
+    'home.staffLogin': { ko:'매장 로그인', en:'Store login', th:'เข้าสู่ระบบร้าน', zh:'商家登录', ja:'店舗ログイン', hi:'स्टोर लॉगिन', ru:'Вход для заведений' },
+    'home.registerStore': { ko:'매장 등록 신청', en:'Register your store', th:'สมัครร้าน', zh:'注册门店', ja:'店舗登録申請', hi:'स्टोर पंजीकरण', ru:'Регистрация заведения' }
   };
 
   function t(lang, key){ var e = S[key]; if (!e) return key; return e[lang] || e.en || e.ko || key; }

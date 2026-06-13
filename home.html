@@ -42,6 +42,12 @@
   .gate-row input:focus{outline:none; border-color:var(--teal);}
   .gate-row .btn{padding:0 18px; font-size:14px;}
   .gate-err{font-size:12px; color:var(--warm); margin-top:7px; min-height:1px;}
+  .bizfoot{margin:6px 14px 30px; padding:15px 16px; background:#fbfdfc; border:1px solid #e2e9e7; border-radius:14px; text-align:center;}
+  .bizfoot .bt{font-size:13px; font-weight:700; color:var(--muted); margin-bottom:10px;}
+  .bizfoot .brow{display:flex; gap:9px;}
+  .bizfoot a{flex:1; text-decoration:none; border-radius:11px; padding:11px; font-size:13.5px; font-weight:700;}
+  .bizfoot a.primary{background:var(--teal); color:#fff;}
+  .bizfoot a.ghost{background:#fff; color:var(--teal); border:1.5px solid var(--teal-line);}
 </style>
 </head>
 <body>
@@ -63,6 +69,7 @@
   <div class="filters" id="cats"></div>
   <div class="arearow"><select id="area" onchange="onArea(this.value)"></select></div>
   <div class="list" id="list"></div>
+  <div class="bizfoot" id="bizfoot"></div>
 </div>
 
 <script src="i18n.js"></script>
@@ -114,6 +121,10 @@
     var areas = Object.keys(stores.reduce(function(m,s){ if(s.area)m[s.area]=1; return m; },{}));
     var sel=document.getElementById('area');
     sel.innerHTML = '<option value="all">📍 '+t('home.allAreas')+'</option>' + areas.map(function(a){ return '<option value="'+a+'"'+(filter.area===a?' selected':'')+'>📍 '+areaName(a)+'</option>'; }).join('');
+    document.getElementById('bizfoot').innerHTML =
+      '<div class="bt">🏪 '+t('home.forBiz')+'</div><div class="brow">'+
+      '<a class="primary" href="admin.html">'+t('home.staffLogin')+'</a>'+
+      '<a class="ghost" href="register.html">'+t('home.registerStore')+'</a></div>';
   }
 
   function storeName(s){ var n=s.names||{}; return n[lang]||n.en||n.th||n.ko||s.slug; }

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#16323A">
+<title>QuesMe · 관리자</title>
+<link rel="stylesheet" href="app.css">
+<style>
+  .adm{max-width:820px; margin:0 auto; min-height:100%; background:#fff;}
+  .adm-top{background:var(--ink); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between;}
+  .adm-top .t1{font-size:17px; font-weight:800;} .adm-top .t2{font-size:12px; opacity:.8;}
+  .logoutbtn{background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:6px 11px; font-size:12px; font-weight:700;}
+  .sec{padding:14px 18px;}
+  .sech{font-size:13px; font-weight:800; color:var(--ink); margin:4px 0 10px; display:flex; align-items:center; gap:7px;}
+  .stats{display:flex; gap:10px; padding:14px 18px 4px;}
+  .stat{flex:1; background:#fbfdfc; border:1px solid #eef3f1; border-radius:13px; padding:13px; text-align:center;}
+  .stat .v{font-size:24px; font-weight:800; color:var(--teal);} .stat .k{font-size:12px; color:var(--muted); margin-top:2px;}
+  .card{display:flex; align-items:center; gap:12px; padding:12px 13px; border:1px solid #eef3f1; border-radius:13px; margin-bottom:9px;}
+  .card .lg{width:46px; height:46px; flex:0 0 46px; border-radius:12px; background:var(--teal-l); display:flex; align-items:center; justify-content:center; font-size:22px; overflow:hidden;}
+  .card .lg img{width:100%;height:100%;object-fit:cover;}
+  .card .mid{flex:1; min-width:0;} .card .nm{font-size:15px; font-weight:800;} .card .sub{font-size:12px; color:var(--muted); margin-top:2px;}
+  .card .acts{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;}
+  .wpill{font-size:11px; font-weight:800; padding:4px 9px; border-radius:20px; background:#fff4dd; color:#9a6a00;}
+  .wpill.free{background:var(--teal-l); color:var(--teal);}
+  .reqcard{border:1px solid #f0c674; background:#fffaf0;}
+  .empty{text-align:center; color:#9aa7a4; padding:24px; font-size:13px;}
+  /* login */
+  .loginwrap{position:fixed; inset:0; background:#0c1a1f; display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;}
+  .logincard{background:#fff; border-radius:18px; padding:28px 24px; width:100%; max-width:360px;}
+  .loginh{text-align:center; font-size:20px; font-weight:800; color:var(--teal);}
+  .logint{text-align:center; font-size:14px; color:var(--muted); margin:4px 0 18px; font-weight:700;}
+  .logincard input{width:100%; padding:13px; border:1.5px solid #d7e2df; border-radius:11px; font-size:15px; font-family:inherit; margin-bottom:10px;}
+  .logincard input:focus{outline:none; border-color:var(--teal);}
+  .loginErr{color:var(--warm); font-size:13px; text-align:center; margin-top:10px; min-height:1px;}
+</style>
+</head>
+<body>
+<div class="loginwrap" id="loginwrap">
+  <div class="logincard">
+    <div class="loginh">QuesMe</div>
+    <div class="logint">매장 · 관리자 로그인</div>
+    <input id="liId" placeholder="아이디 (예: danny)" autocapitalize="off">
+    <input id="liPw" type="password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="bigbtn" onclick="doLogin()">로그인</button>
+    <div class="loginErr" id="liErr"></div>
+  </div>
+</div>
+
+<div class="adm">
+  <div class="adm-top"><div><div class="t1" id="title">QuesMe 관리자</div><div class="t2" id="who"></div></div>
+    <button class="logoutbtn" onclick="doLogout()">로그아웃</button></div>
+  <div id="content"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  var supa = window.supabase.createClient(QUESME_CONFIG.url, QUESME_CONFIG.anonKey);
+  var CATNAME = {restaurant:'식당',cafe:'카페',clinic:'병원·클리닉',beauty:'네일·뷰티',massage:'마사지',bank:'은행',gov:'관공서',other:'기타'};
+  var CATICON = {restaurant:'🍽',cafe:'☕',clinic:'🏥',beauty:'💅',massage:'💆',bank:'🏦',gov:'🏛',other:'🏪'};
+  var isSuper=false, myEmail='';
+
+  window.doLogin=function(){
+    var id=(document.getElementById('liId').value||'').trim(); if(id.indexOf('@')<0) id=id+'@thaimate.app';
+    var pw=document.getElementById('liPw').value||''; document.getElementById('liErr').textContent='';
+    supa.auth.signInWithPassword({email:id,password:pw}).then(function(r){ if(r&&r.error) document.getElementById('liErr').textContent='로그인 실패 — 아이디/비밀번호 확인'; });
+  };
+  window.doLogout=function(){ supa.auth.signOut(); };
+
+  function storeName(s){ var n=s.names||{}; return n.ko||n.en||n.th||s.slug; }
+
+  function loadAll(){
+    Promise.all([
+      supa.rpc('quesme_is_super'),
+      supa.from('quesme_staff').select('store_slug'),
+      supa.from('quesme_entries').select('store_slug').in('status',['waiting','called'])
+    ]).then(function(r){
+      isSuper = !!(r[0] && r[0].data);
+      var mySlugs = (r[1].data||[]).map(function(x){return x.store_slug;});
+      var counts={}; (r[2].data||[]).forEach(function(e){counts[e.store_slug]=(counts[e.store_slug]||0)+1;});
+      document.getElementById('who').textContent = myEmail + (isSuper?' · 슈퍼관리자':' · 매장 직원');
+      if(isSuper){
+        Promise.all([ supa.from('quesme_stores').select('*'), supa.from('quesme_store_requests').select('*').eq('status','pending').order('created_at') ])
+          .then(function(rr){ renderSuper(rr[0].data||[], rr[1].data||[], counts); });
+      } else {
+        supa.from('quesme_stores').select('*').then(function(rr){
+          var mine=(rr.data||[]).filter(function(s){return mySlugs.indexOf(s.slug)>=0;});
+          renderStaff(mine, counts);
+        });
+      }
+    });
+  }
+
+  function storeCard(s, counts){
+    var n=counts[s.slug]||0; var logo=s.logo?'<img src="'+s.logo+'">':(CATICON[s.category]||'🏪');
+    var badge = n>0?'<span class="wpill">대기 '+n+'</span>':'<span class="wpill free">바로 입장</span>';
+    return '<div class="card"><div class="lg">'+logo+'</div>'+
+      '<div class="mid"><div class="nm">'+storeName(s)+'</div><div class="sub">'+(CATNAME[s.category]||'')+(s.area?' · '+s.area:'')+' · <code>'+s.slug+'</code></div></div>'+
+      '<div class="acts">'+badge+
+      '<a class="btn sm" href="console.html?store='+encodeURIComponent(s.slug)+'">콘솔</a>'+
+      '<a class="btn ghost sm" href="qr.html?store='+encodeURIComponent(s.slug)+'">QR</a></div></div>';
+  }
+
+  function renderSuper(stores, reqs, counts){
+    var totalWait=Object.keys(counts).reduce(function(a,k){return a+counts[k];},0);
+    var html = '<div class="stats">'+
+      '<div class="stat"><div class="v">'+stores.length+'</div><div class="k">매장</div></div>'+
+      '<div class="stat"><div class="v">'+totalWait+'</div><div class="k">대기 팀(합)</div></div>'+
+      '<div class="stat"><div class="v">'+reqs.length+'</div><div class="k">신청 대기</div></div></div>';
+    html += '<div class="sec"><div class="sech">📨 매장 등록 신청 ('+reqs.length+')</div>'+
+      (reqs.length? reqs.map(function(q){
+        return '<div class="card reqcard"><div class="lg">'+(CATICON[q.category]||'🏪')+'</div>'+
+          '<div class="mid"><div class="nm">'+(q.name||'')+'</div><div class="sub">'+(CATNAME[q.category]||'')+(q.area?' · '+q.area:'')+' · 코드 <code>'+q.desired_slug+'</code> · 아이디 <code>'+q.login_id+'</code>'+(q.contact?' · '+q.contact:'')+'</div></div>'+
+          '<div class="acts"><button class="btn sm" onclick="approve(\''+q.id+'\')">승인</button><button class="btn gray sm" onclick="reject(\''+q.id+'\')">반려</button></div></div>';
+      }).join('') : '<div class="empty">대기 중인 신청 없음</div>')+'</div>';
+    html += '<div class="sec"><div class="sech">🏪 전체 매장 ('+stores.length+')</div>'+
+      (stores.length? stores.sort(function(a,b){return (a.slug||'').localeCompare(b.slug||'');}).map(function(s){return storeCard(s,counts);}).join('') : '<div class="empty">매장 없음</div>')+'</div>';
+    document.getElementById('content').innerHTML = html;
+  }
+
+  function renderStaff(mine, counts){
+    document.getElementById('content').innerHTML = '<div class="sec"><div class="sech">🏪 내 매장 ('+mine.length+')</div>'+
+      (mine.length? mine.map(function(s){return storeCard(s,counts);}).join('') : '<div class="empty">관리 중인 매장이 없어요. 슈퍼관리자에게 문의하세요.</div>')+'</div>';
+  }
+
+  window.approve=function(id){
+    supa.from('quesme_store_requests').select('*').eq('id',id).maybeSingle().then(function(r){
+      var q=r.data; if(!q) return;
+      supa.from('quesme_stores').insert({ slug:q.desired_slug, names:{ko:q.name}, category:q.category, area:q.area }).then(function(s1){
+        supa.from('quesme_staff').insert({ email:(q.login_id||'')+'@thaimate.app', store_slug:q.desired_slug }).then(function(){
+          supa.from('quesme_store_requests').update({status:'approved'}).eq('id',id).then(function(){ loadAll(); });
+        });
+      });
+    });
+  };
+  window.reject=function(id){ supa.from('quesme_store_requests').update({status:'rejected'}).eq('id',id).then(function(){ loadAll(); }); };
+
+  supa.auth.getSession().then(function(r){ updateAuth(r.data&&r.data.session); });
+  supa.auth.onAuthStateChange(function(_e,session){ updateAuth(session); });
+  function updateAuth(session){
+    var inn=!!session; document.getElementById('loginwrap').style.display=inn?'none':'flex';
+    if(inn){ myEmail=(session.user&&session.user.email)||''; loadAll(); }
+  }
+})();
+</script>
+</body>
+</html>

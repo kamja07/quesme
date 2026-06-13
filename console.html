@@ -50,6 +50,7 @@
 <div class="con">
   <div class="con-top">
     <span class="emblem"><span class="mk" id="mk"></span><span class="nm"><b id="storeName">강남바베큐 라끄라방점</b><small id="subtitle">QuesMe</small></span></span>
+    <select id="storeSwitch" class="conlang" onchange="switchStore(this.value)" style="display:none;max-width:130px"></select>
     <select id="conLangSel" class="conlang" onchange="setConLang(this.value)">
       <option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option>
     </select>
@@ -95,6 +96,23 @@
       .catch(function(){ document.getElementById('liErr').textContent=T('con.loginErr'); });
   };
   window.doLogout=function(){ store.signOut(); };
+  window.switchStore=function(v){ if(v && v!==slug) location.href='console.html?store='+encodeURIComponent(v); };
+  function loadSwitcher(){
+    var supa = window.supabase.createClient(QUESME_CONFIG.url, QUESME_CONFIG.anonKey);
+    Promise.all([ supa.rpc('quesme_is_super'), supa.from('quesme_staff').select('store_slug') ]).then(function(r){
+      var isSuper=!!(r[0]&&r[0].data);
+      var slugs=(r[1].data||[]).map(function(x){return x.store_slug;}).filter(function(s){return s!=='*';});
+      supa.from('quesme_stores').select('*').then(function(rr){
+        var all=rr.data||[];
+        var mine = isSuper ? all : all.filter(function(s){return slugs.indexOf(s.slug)>=0;});
+        if(mine.length<2) return;
+        mine.sort(function(a,b){return (a.slug||'').localeCompare(b.slug||'');});
+        var sel=document.getElementById('storeSwitch');
+        sel.innerHTML = mine.map(function(s){ return '<option value="'+s.slug+'"'+(s.slug===slug?' selected':'')+'>'+(I18N.storeName({store:s},conLang)||s.slug)+'</option>'; }).join('');
+        sel.style.display='';
+      });
+    });
+  }
   function fmtWait(ts){ var s=Math.floor((Date.now()-ts)/1000); return s<60? s+'s' : Math.floor(s/60)+'m'; }
 
   function buildNames(){  // DB값으로 채우되, 타이핑 중이면 건너뜀(포커스 유지)
@@ -166,6 +184,7 @@
     var inn = !!session;
     document.getElementById('loginwrap').style.display = inn ? 'none' : 'flex';
     document.getElementById('logoutBtn').style.display = inn ? '' : 'none';
+    if(inn) loadSwitcher();
   });
   store.subscribe(render);
   setInterval(function(){ render(store.getState()); var t=new Date(); document.getElementById('clock')&&0; }, 1000);
