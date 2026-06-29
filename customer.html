@@ -33,6 +33,11 @@
 (function(){
   if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
   var slug = new URLSearchParams(location.search).get('store') || 'gangnam';
+  // 웰니스(마사지/네일/스파) 매장은 전용 예약화면으로 (안전망 — 보통은 home/QR에서 바로 spa.html)
+  (function(){ try{ var c=window.supabase.createClient(QUESME_CONFIG.url,QUESME_CONFIG.anonKey);
+    c.from('quesme_stores').select('category').eq('slug',slug).maybeSingle().then(function(r){
+      if(r.data && ['massage','beauty','spa'].indexOf(r.data.category)>=0){ location.replace('spa.html'+location.search); }
+    }); }catch(e){} })();
   var store = new QueueStore(slug);
   var myKey = 'quesme:my:' + slug, myResKey = 'quesme:myres:' + slug;
   var partySize = 2, joinMode = 'now';

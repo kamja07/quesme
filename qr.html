@@ -70,6 +70,14 @@
   var custUrl = new URL('customer.html?store='+encodeURIComponent(slug), location.href).href;
   document.getElementById('url').textContent = custUrl;
 
+  // 웰니스(마사지/네일/스파) 매장이면 QR이 spa.html을 가리키게
+  (function(){ try{ var c=window.supabase.createClient(QUESME_CONFIG.url,QUESME_CONFIG.anonKey);
+    c.from('quesme_stores').select('category').eq('slug',slug).maybeSingle().then(function(r){
+      var page=(r.data && ['massage','beauty','spa'].indexOf(r.data.category)>=0)?'spa.html':'customer.html';
+      custUrl = new URL(page+'?store='+encodeURIComponent(slug), location.href).href;
+      document.getElementById('url').textContent = custUrl; draw();
+    }); }catch(e){} })();
+
   function draw(){
     var box = document.getElementById('qrbox');
     if(typeof QRCode === 'undefined'){ document.getElementById('qrfail').textContent = 'QR 라이브러리를 불러오지 못했습니다 (인터넷 확인). 아래 주소를 사용하세요.'; return; }

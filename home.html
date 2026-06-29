@@ -93,6 +93,7 @@
     siam:{ko:'시암',en:'Siam',th:'สยาม'}
   };
   function areaName(code){ var a=AREA[code]; if(!a) return code||''; return a[lang]||a.en||a.ko||code; }
+  function pageFor(cat){ return ['massage','beauty','spa'].indexOf(cat)>=0 ? 'spa.html' : 'customer.html'; }
 
   var stores=[], counts={}, filter={ q:'', cat:'all', area:'all' };
 
@@ -103,8 +104,9 @@
   window.goEnter=function(){
     var code=(document.getElementById('code').value||'').trim().toLowerCase();
     if(!code) return;
-    var ok = !stores.length || stores.some(function(s){ return (s.slug||'').toLowerCase()===code; });
-    if(ok){ location.href='customer.html?store='+encodeURIComponent(code); }
+    var match = stores.filter(function(s){ return (s.slug||'').toLowerCase()===code; })[0];
+    var ok = !stores.length || !!match;
+    if(ok){ location.href=pageFor(match&&match.category)+'?store='+encodeURIComponent(code); }
     else { document.getElementById('codeErr').textContent=t('home.notFound'); }
   };
 
@@ -139,7 +141,7 @@
       var badge = n>0 ? '<span class="wbadge wait">'+tn('home.waitTeams',n)+'</span>' : '<span class="wbadge free">'+t('home.noWait')+'</span>';
       var logo = s.logo ? '<img src="'+s.logo+'" alt="">' : (CAT_ICON[s.category]||'🏪');
       var sub = t('cat.'+(s.category||'all')) + (s.area?' · '+areaName(s.area):'');
-      return '<a class="scard" href="customer.html?store='+encodeURIComponent(s.slug)+'">'+
+      return '<a class="scard" href="'+pageFor(s.category)+'?store='+encodeURIComponent(s.slug)+'">'+
         '<div class="logo">'+logo+'</div>'+
         '<div class="mid"><div class="nm">'+storeName(s)+'</div><div class="sub">'+sub+'</div></div>'+
         badge+'</a>';

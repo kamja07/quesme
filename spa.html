@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0E7A5F">
+<script src="inapp.js"></script>
+<title>QuesMe</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="app.css">
+<style>
+  .langsel{margin-left:auto; background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:9px; padding:6px 8px; font-size:12px; font-family:inherit;}
+  .langsel option{color:#16323A;}
+  .spa-body{padding:14px 16px 30px; max-width:560px; margin:0 auto;}
+  .sec{margin-bottom:20px;}
+  .sec-h{font-size:14px; font-weight:800; color:var(--ink); margin:0 0 10px; display:flex; align-items:center; gap:7px;}
+  .sec-h .num{width:20px; height:20px; flex:0 0 20px; background:var(--teal); color:#fff; border-radius:50%; font-size:12px; display:inline-flex; align-items:center; justify-content:center;}
+  .opts{display:flex; flex-direction:column; gap:8px;}
+  .opt{display:flex; align-items:center; gap:11px; padding:13px 14px; border:1.5px solid #e2e9e7; border-radius:13px; cursor:pointer; background:#fff; transition:.12s;}
+  .opt.on{border-color:var(--teal); background:var(--teal-l);}
+  .opt .tick{margin-left:auto; width:20px; height:20px; flex:0 0 20px; border-radius:50%; border:1.5px solid #d7e2df;}
+  .opt.on .tick{border-color:var(--teal); background:var(--teal); box-shadow:inset 0 0 0 3px #fff;}
+  .opt .nm{font-size:15px; font-weight:700; color:var(--ink);}
+  .opt .meta{font-size:12.5px; color:var(--muted); margin-top:1px;}
+  .opt .av{width:38px; height:38px; flex:0 0 38px; border-radius:50%; background:var(--teal-l); color:var(--teal); font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .opt .av img{width:100%;height:100%;object-fit:cover;}
+  .rbadge{font-size:11px; font-weight:800; padding:3px 8px; border-radius:20px;}
+  .rbadge.private{background:var(--teal-l); color:var(--teal);}
+  .rbadge.shared{background:#fff4dd; color:#9a6a00;}
+  .rbadge.group{background:var(--warm-l); color:var(--warm);}
+  /* 마사지사 프로필 메뉴 */
+  .grp-h{font-size:12.5px; font-weight:800; color:var(--muted); margin:14px 0 9px; display:flex; align-items:center; gap:6px;}
+  .provgrid{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
+  .pcard{position:relative; border:1.5px solid #e2e9e7; border-radius:15px; padding:14px 10px 12px; cursor:pointer; background:#fff; text-align:center; transition:.12s;}
+  .pcard.on{border-color:var(--teal); background:var(--teal-l);}
+  .pcard .pic{width:66px; height:66px; border-radius:50%; margin:2px auto 9px; background:var(--teal-l); color:var(--teal); font-weight:800; font-size:26px; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow:0 0 0 2px var(--teal-line);}
+  .pcard.pretty .pic{box-shadow:0 0 0 2px #e6b800;}
+  .pcard .pic img{width:100%; height:100%; object-fit:cover;}
+  .pcard .pnm{font-size:14.5px; font-weight:800; color:var(--ink);}
+  .pcard .pbio{font-size:11px; color:var(--muted); margin-top:2px; min-height:14px; line-height:1.35;}
+  .pcard .pextra{font-size:11.5px; font-weight:800; color:var(--amber); margin-top:4px;}
+  .pcard .ptier{position:absolute; top:9px; left:9px; font-size:10px; font-weight:800; padding:2px 7px; border-radius:20px;}
+  .ptier.pretty{background:#fff3cd; color:#9a6a00;}
+  .ptier.regular{background:#eef3f1; color:#5f6f6c;}
+  .pcard.on .ptick{position:absolute; top:9px; right:9px; color:var(--teal); font-weight:900; font-size:14px;}
+  .modetabs{display:flex; gap:8px; margin-bottom:10px;}
+  .mtab{flex:1; padding:11px; border-radius:11px; border:1.5px solid #e2e9e7; background:#fff; font-size:14px; font-weight:700; color:var(--muted);}
+  .mtab.on{border-color:var(--teal); background:var(--teal); color:#fff;}
+  .field input, .field select{width:100%; padding:13px; border:1.5px solid #d7e2df; border-radius:12px; font-size:15px; font-family:inherit; color:var(--ink);}
+  .field input:focus, .field select:focus{outline:none; border-color:var(--teal);}
+  .field label{display:block; font-size:12.5px; color:var(--muted); font-weight:700; margin-bottom:7px;}
+  .err{color:var(--warm); font-size:13px; text-align:center; min-height:1px; margin:4px 0;}
+  /* ticket */
+  .tk{background:var(--teal-l); border:1.5px solid var(--teal-line); border-radius:18px; padding:20px; text-align:center; margin-top:6px;}
+  .tk .big{font-size:22px; font-weight:800; color:var(--teal);}
+  .tk .nick{font-size:15px; color:var(--ink); margin-top:4px;}
+  .tk .rows{text-align:left; background:#fff; border-radius:13px; padding:13px 15px; margin:15px 0;}
+  .tk .r{display:flex; justify-content:space-between; gap:12px; padding:6px 0; font-size:14px;}
+  .tk .r + .r{border-top:1px solid #eef3f1;}
+  .tk .r .k{color:var(--muted);} .tk .r .v{font-weight:700; color:var(--ink); text-align:right;}
+  .tk .status{font-size:14px; font-weight:700; padding:11px; border-radius:11px; background:#fff;}
+  .tk .status.serving{background:var(--warm); color:#fff;}
+</style>
+</head>
+<body>
+<div class="cust">
+  <div class="cust-top">
+    <span class="mk" id="mk"></span>
+    <div><div class="t1" id="storeName">QuesMe</div><div class="t2" id="tagline"></div></div>
+    <select id="langSel" class="langsel" onchange="setLang(this.value)">
+      <option value="ko">한국어</option><option value="en">English</option><option value="th">ไทย</option><option value="zh">中文</option><option value="ja">日本語</option><option value="hi">हिन्दी</option><option value="ru">Русский</option>
+    </select>
+  </div>
+  <div class="spa-body" id="body"></div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
+  var slug = new URLSearchParams(location.search).get('store') || 'massage-thonglor';
+  var supa = window.supabase.createClient(QUESME_CONFIG.url, QUESME_CONFIG.anonKey);
+  var lang = I18N.detectLang();
+  function t(k){ return I18N.t(lang,k); }
+  function tn(k,n){ return I18N.t(lang,k).replace('{n}',n); }
+  var esc = function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
+
+  var store=null, providers=[], rooms=[], services=[], shifts=[], shiftIdx={};
+  var sel={ loc:'shop', svc:null, prov:null, room:null, addr:'', mode:'now', slot:null };
+  var OUTCALL_FEE = 300;
+  function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function onShiftProviders(){
+    var loc = sel.loc||'shop';
+    var act = providers.filter(function(p){ return p.active!==false; });
+    return act.filter(function(p){
+      if(loc==='outcall' && !p.outcall_ok) return false;
+      if(!shifts.length) return loc==='shop' ? true : !!p.outcall_ok;   // 출근표 미설정 → graceful
+      var s=shiftIdx[p.id]; if(!s || s.off) return false;
+      var av=s.avail||'shop';
+      return loc==='outcall' ? (av==='outcall'||av==='both') : (av==='shop'||av==='both');
+    });
+  }
+  window.setLoc=function(v){ sel.loc=v; sel.prov=null; sel.room=null; render(); };
+  window.setAddr=function(v){ sel.addr=v; };
+  var myKey='quesme:spa:'+slug;
+  function myId(){ return sessionStorage.getItem(myKey)||null; }
+  function setMyId(v){ v?sessionStorage.setItem(myKey,v):sessionStorage.removeItem(myKey); }
+  var myBooking=null;
+
+  window.setLang=function(v){ lang=v; try{localStorage.setItem('quesme:lang',v);}catch(e){} render(); };
+
+  function slots(){ var out=[],d=new Date(); d.setSeconds(0,0); var m=d.getMinutes(); d.setMinutes(m+((m<30)?(30-m):(60-m))); for(var i=0;i<8;i++){var x=new Date(d.getTime()+i*30*60000); out.push(String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0'));} return out; }
+  function genCno(){ return 100+Math.floor(Math.random()*900); }
+  function byId(arr,id){ for(var i=0;i<arr.length;i++) if(arr[i].id===id) return arr[i]; return null; }
+  function svcLabel(s){ return esc(s.name)+' · '+tn('spa.min',s.duration_min)+(s.price?' · ฿'+s.price:''); }
+
+  window.pick=function(kind,id){ sel[kind]=id; render(); };
+  window.pickProv=function(id){ sel.prov=(id==='any')?null:id; sel._provTouched=true; render(); };
+  window.setMode=function(m){ sel.mode=m; var n=document.getElementById('nick'); if(n) lastNick=n.value; render(); };
+  var lastNick=(function(){ try{ return localStorage.getItem('quesme:nick')||''; }catch(e){ return ''; } })();
+
+  window.book=function(){
+    var n=document.getElementById('nick'); var nick=(n&&n.value||'').trim();
+    var ad=document.getElementById('addr'); if(ad) sel.addr=ad.value;
+    var isOut=sel.loc==='outcall';
+    var err=document.getElementById('err'); err.textContent='';
+    if(!sel.svc){ err.textContent=t('spa.needSvc'); return; }
+    if(isOut){ if(!(sel.addr||'').trim()){ err.textContent=t('spa.needAddr'); if(ad)ad.focus(); return; } }
+    else if(!sel.room){ err.textContent=t('spa.needRoom'); return; }
+    if(!nick){ if(n){n.focus();} return; }
+    try{ localStorage.setItem('quesme:nick',nick); }catch(e){}
+    var svc=byId(services,sel.svc);
+    var id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'x'+Math.random().toString(36).slice(2)+Date.now();
+    var row={ id:id, store_slug:slug, nick:nick, lang:lang, service_id:sel.svc, provider_id:sel.prov||null,
+      room_id:isOut?null:sel.room, location_type:isOut?'outcall':'shop', address:isOut?(sel.addr||'').trim():null, travel_fee:isOut?OUTCALL_FEE:0,
+      mode:sel.mode==='reserve'?'reserve':'walkin', book_date:todayStr(), start_time:sel.mode==='reserve'?(sel.slot||slots()[0]):null,
+      duration_min:svc?svc.duration_min:60, status:'waiting', cno:genCno() };
+    document.getElementById('bookBtn').disabled=true;
+    supa.from('quesme_bookings').insert(row).then(function(res){
+      if(res&&res.error){ err.textContent='예약 실패 — 잠시 후 다시'; document.getElementById('bookBtn').disabled=false; return; }
+      setMyId(id); myBooking=row; render();
+    }).catch(function(){ err.textContent='예약 실패 — 잠시 후 다시'; document.getElementById('bookBtn').disabled=false; });
+  };
+  window.cancelBooking=function(){
+    var id=myId(); if(!id) return;
+    supa.from('quesme_bookings').update({status:'cancelled'}).eq('id',id).then(function(){ setMyId(null); myBooking=null; loadMine(); });
+  };
+
+  function chrome(){
+    document.getElementById('langSel').value=lang;
+    document.getElementById('mk').innerHTML = (store&&store.logo)?'<img src="'+store.logo+'" alt="">':'💆';
+    document.getElementById('storeName').textContent = store?I18N.storeName({store:store},lang):'QuesMe';
+    document.getElementById('tagline').textContent = 'QuesMe · '+t('spa.tagline');
+  }
+
+  function render(){
+    chrome();
+    var el=document.getElementById('body');
+    if(myBooking && (myBooking.status==='waiting'||myBooking.status==='serving')){ el.innerHTML=ticket(myBooking); return; }
+    // 예약 폼
+    var svcOpts = services.filter(function(s){return s.active!==false;}).map(function(s){
+      return '<div class="opt '+(sel.svc===s.id?'on':'')+'" onclick="pick(\'svc\',\''+s.id+'\')"><div><div class="nm">'+esc(s.name)+'</div><div class="meta">'+tn('spa.min',s.duration_min)+(s.price?' · ฿'+s.price:'')+'</div></div><div class="tick"></div></div>';
+    }).join('') || '<div class="meta" style="color:#9aa7a4">—</div>';
+
+    function provCard(p){
+      var ini=(p.name||'?').trim().charAt(0).toUpperCase();
+      var pic = p.avatar?'<img src="'+esc(p.avatar)+'">':esc(ini);
+      var ty = p.tier==='pretty'?'pretty':'regular';
+      var extra = p.price_extra>0?'<div class="pextra">'+tn('spa.extra',p.price_extra)+'</div>':'';
+      return '<div class="pcard '+ty+' '+(sel.prov===p.id?'on':'')+'" onclick="pickProv(\''+p.id+'\')">'+
+        (sel.prov===p.id?'<span class="ptick">✓</span>':'')+
+        '<span class="ptier '+ty+'">'+t('spa.tier.'+ty)+'</span>'+
+        '<div class="pic">'+pic+'</div><div class="pnm">'+esc(p.name)+'</div>'+
+        '<div class="pbio">'+esc(p.bio||'')+'</div>'+extra+'</div>';
+    }
+    var onS = onShiftProviders();
+    var pretty = onS.filter(function(p){return p.tier==='pretty';});
+    var regular = onS.filter(function(p){return p.tier!=='pretty';});
+    var provHtml = '<div class="opt '+(sel.prov===null?'on':'')+'" onclick="pickProv(\'any\')"><div class="av">🙂</div><div class="nm">'+t('spa.anyone')+'</div><div class="tick"></div></div>';
+    if(onS.length) provHtml += '<div style="font-size:11px;color:#9aa7a4;margin:8px 2px 0">'+t('spa.firstHint')+'</div>';
+    if(pretty.length) provHtml += '<div class="grp-h">⭐ '+t('spa.tier.pretty')+'</div><div class="provgrid">'+pretty.map(provCard).join('')+'</div>';
+    if(regular.length) provHtml += '<div class="grp-h">'+t('spa.tier.regular')+'</div><div class="provgrid">'+regular.map(provCard).join('')+'</div>';
+
+    var roomHtml = rooms.filter(function(r){return r.active!==false;}).map(function(r){
+      var ty=r.type||'private';
+      return '<div class="opt '+(sel.room===r.id?'on':'')+'" onclick="pick(\'room\',\''+r.id+'\')"><div><div class="nm">'+esc(r.name)+'</div><div class="meta"><span class="rbadge '+ty+'">'+t('spa.room.'+ty)+'</span> '+tn('spa.cap',r.capacity||1)+'</div></div><div class="tick"></div></div>';
+    }).join('') || '<div class="meta" style="color:#9aa7a4">—</div>';
+
+    var isRes = sel.mode==='reserve';
+    var timeHtml = '<div class="modetabs"><button class="mtab '+(!isRes?'on':'')+'" onclick="setMode(\'now\')">'+t('spa.now')+'</button>'+
+      '<button class="mtab '+(isRes?'on':'')+'" onclick="setMode(\'reserve\')">'+t('spa.reserve')+'</button></div>'+
+      (isRes?'<div class="field"><label>'+t('spa.time')+'</label><select id="slot" onchange="window.__slot=this.value">'+slots().map(function(s){return '<option value="'+s+'"'+(sel.slot===s?' selected':'')+'>'+t('spa.today')+' '+s+'</option>';}).join('')+'</select></div>':'');
+
+    var isOut = sel.loc==='outcall';
+    var locHtml = '<div class="modetabs"><button class="mtab '+(!isOut?'on':'')+'" onclick="setLoc(\'shop\')">🏠 '+t('spa.locShop')+'</button>'+
+      '<button class="mtab '+(isOut?'on':'')+'" onclick="setLoc(\'outcall\')">🚗 '+t('spa.locOutcall')+'</button></div>';
+    var placeHtml = isOut
+      ? '<div class="field"><label>'+t('spa.address')+'</label><input id="addr" value="'+esc(sel.addr||'')+'" placeholder="'+t('spa.addressPh')+'" oninput="setAddr(this.value)"></div>'+
+        '<div style="font-size:12.5px;color:var(--muted);margin-top:8px">🚗 '+t('spa.travelFee')+': <b>฿'+OUTCALL_FEE+'</b></div>'
+      : '<div class="opts">'+roomHtml+'</div>';
+    var placeTitle = isOut ? t('spa.address') : t('spa.room');
+
+    el.innerHTML =
+      '<div class="sec"><div class="sec-h"><span class="num">1</span>'+t('spa.where')+'</div>'+locHtml+'</div>'+
+      '<div class="sec"><div class="sec-h"><span class="num">2</span>'+t('spa.svc')+'</div><div class="opts">'+svcOpts+'</div></div>'+
+      '<div class="sec"><div class="sec-h"><span class="num">3</span>'+t('spa.therapist')+'</div><div class="opts">'+provHtml+'</div></div>'+
+      '<div class="sec"><div class="sec-h"><span class="num">4</span>'+placeTitle+'</div>'+placeHtml+'</div>'+
+      '<div class="sec"><div class="sec-h"><span class="num">5</span>'+t('spa.when')+'</div>'+timeHtml+'</div>'+
+      '<div class="field" style="margin-bottom:14px"><label>'+t('field.nick')+'</label><input id="nick" maxlength="14" value="'+esc(lastNick)+'" placeholder="'+t('start.nickPh')+'"></div>'+
+      '<button class="bigbtn" id="bookBtn" onclick="book()">'+(isRes?t('spa.book'):t('spa.bookNow'))+'</button>'+
+      '<div class="err" id="err"></div>';
+    if(isRes){ var sl=document.getElementById('slot'); if(sl){ sl.addEventListener('change',function(){ sel.slot=sl.value; }); if(!sel.slot) sel.slot=sl.value; } }
+  }
+
+  function ticket(b){
+    var svc=byId(services,b.service_id), prov=b.provider_id?byId(providers,b.provider_id):null, room=byId(rooms,b.room_id);
+    var serving=b.status==='serving';
+    var isOut=b.location_type==='outcall';
+    var whenTxt = b.mode==='reserve' ? (t('spa.today')+' '+(b.start_time||'')) : t('spa.now');
+    var whereTxt = isOut ? ('🚗 '+t('spa.locOutcall')+(b.address?' · '+esc(b.address):'')) : ('🏠 '+t('spa.locShop'));
+    return '<div class="tk"><div class="big">'+t('spa.booked')+' 🎉</div>'+
+      '<div class="nick">'+t('lbl.myNick')+' <b>'+esc(b.nick)+'</b> · '+tn('lbl.custNo',b.cno)+'</div>'+
+      '<div class="rows">'+
+        '<div class="r"><span class="k">'+t('spa.lblWhere')+'</span><span class="v">'+whereTxt+'</span></div>'+
+        '<div class="r"><span class="k">'+t('spa.lblSvc')+'</span><span class="v">'+(svc?esc(svc.name)+' · '+tn('spa.min',svc.duration_min):'-')+'</span></div>'+
+        '<div class="r"><span class="k">'+t('spa.lblWho')+'</span><span class="v">'+(prov?esc(prov.name)+(prov.tier==='pretty'?' ⭐':''):t('spa.anyone'))+'</span></div>'+
+        (isOut?'':'<div class="r"><span class="k">'+t('spa.lblRoom')+'</span><span class="v">'+(room?esc(room.name)+' · '+t('spa.room.'+(room.type||'private')):'-')+'</span></div>')+
+        (isOut&&b.travel_fee?'<div class="r"><span class="k">'+t('spa.travelFee')+'</span><span class="v">฿'+b.travel_fee+'</span></div>':'')+
+        '<div class="r"><span class="k">'+t('spa.lblWhen')+'</span><span class="v">'+whenTxt+'</span></div>'+
+      '</div>'+
+      '<div class="status '+(serving?'serving':'')+'">'+(serving?'💆 '+t('spa.statusServing'):'🔔 '+t('spa.statusWait'))+'</div>'+
+      '<button class="btn gray block sm" style="margin-top:12px" onclick="cancelBooking()">'+t('spa.cancel')+'</button></div>';
+  }
+
+  function loadMine(){
+    var id=myId(); if(!id){ myBooking=null; render(); return; }
+    supa.from('quesme_bookings').select('*').eq('id',id).maybeSingle().then(function(r){
+      var b=r.data;
+      if(!b || b.status==='done' || b.status==='cancelled'){ setMyId(null); myBooking=null; } else { myBooking=b; }
+      render();
+    });
+  }
+
+  function loadAll(){
+    Promise.all([
+      supa.from('quesme_stores').select('*').eq('slug',slug).maybeSingle(),
+      supa.from('quesme_providers').select('*').eq('store_slug',slug).order('sort'),
+      supa.from('quesme_rooms').select('*').eq('store_slug',slug).order('sort'),
+      supa.from('quesme_services').select('*').eq('store_slug',slug).order('sort'),
+      supa.from('quesme_shifts').select('*').eq('store_slug',slug).eq('work_date',todayStr())
+    ]).then(function(res){
+      store=res[0].data||{slug:slug,names:{}}; providers=res[1].data||[]; rooms=res[2].data||[]; services=res[3].data||[];
+      shifts=res[4].data||[]; shiftIdx={}; shifts.forEach(function(s){ shiftIdx[s.provider_id]=s; });
+      loadMine();
+    });
+  }
+
+  loadAll();
+  supa.channel('quesme-spa-'+slug).on('postgres_changes',{event:'*',schema:'public',table:'quesme_bookings',filter:'store_slug=eq.'+slug},function(){ loadMine(); }).subscribe();
+})();
+</script>
+<script src="pwa.js"></script>
+</body>
+</html>
